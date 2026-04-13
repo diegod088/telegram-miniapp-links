@@ -66,7 +66,7 @@ async def get_profile_by_user(db: AsyncSession, user: User) -> Profile:
     result = await db.execute(
         select(Profile)
         .where(Profile.user_id == user.id)
-        .options(selectinload(Profile.links))
+        .options(selectinload(Profile.links).selectinload(ProfileLink.locks))
     )
     profile = result.scalar_one_or_none()
     if profile is None:
@@ -79,7 +79,7 @@ async def get_profile_by_slug(db: AsyncSession, slug: str) -> Profile:
     result = await db.execute(
         select(Profile)
         .where(Profile.slug == slug, Profile.is_public == True)
-        .options(selectinload(Profile.links))
+        .options(selectinload(Profile.links).selectinload(ProfileLink.locks))
     )
     profile = result.scalar_one_or_none()
     if profile is None:

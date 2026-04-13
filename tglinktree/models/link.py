@@ -44,5 +44,13 @@ class ProfileLink(Base):
         Index("ix_profile_links_profile_position", "profile_id", "position"),
     )
 
+    @property
+    def is_locked(self) -> bool:
+        # Avoid lazy-load missing greenlet if locks wasn't explicitly loaded
+        from sqlalchemy.orm.attributes import instance_state
+        if "locks" in instance_state(self).unloaded:
+            return False
+        return any(lock.is_active for lock in self.locks)
+
     def __repr__(self) -> str:
         return f"<ProfileLink id={self.id} title={self.title!r}>"
