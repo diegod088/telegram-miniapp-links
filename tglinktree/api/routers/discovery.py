@@ -52,7 +52,7 @@ async def search_profiles(
 
 @router.get("/feed/{feed_type}", response_model=ExploreResponse)
 async def get_discovery_feed(
-    feed_type: str = Path(..., regex="^(trending|top|new)$"),
+    feed_type: str = Path(..., pattern="^(trending|top|new)$"),
     category: Optional[str] = Query(None),
     limit: int = Query(default=20, le=50, ge=1),
     offset: int = Query(default=0, ge=0),
