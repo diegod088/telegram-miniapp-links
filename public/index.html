@@ -749,7 +749,7 @@
             if (response.status !== 404) {
               tg.showAlert(msg);
             }
-            throw new Error(msg);
+            throw new Error(`[${response.status}] ${msg}`);
           }
           
           return data;
