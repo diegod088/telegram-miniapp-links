@@ -116,7 +116,7 @@ def create_app() -> FastAPI:
     # CORS — restrict to known origins in production
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.WEBAPP_URL],
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
