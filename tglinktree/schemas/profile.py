@@ -77,6 +77,8 @@ class LinkInProfile(BaseModel):
     link_type: str
     style: dict = {}
     is_locked: bool = False
+    lock_id: Optional[int] = None
+    lock_type: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
@@ -109,3 +111,23 @@ class ProfilePublicResponse(BaseModel):
     links: list[LinkInProfile] = []
 
     model_config = {"from_attributes": True}
+
+
+class ExploreProfileItem(BaseModel):
+    """Profile card for explore/discover view."""
+    slug: str
+    display_name: str
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    plan: str
+    link_count: int
+    total_views: int
+
+    model_config = {"from_attributes": True}
+
+
+class ExploreResponse(BaseModel):
+    """Response for GET /api/explore."""
+    profiles: list[ExploreProfileItem]
+    total: int
+    has_more: bool

@@ -136,10 +136,22 @@ def create_app() -> FastAPI:
     async def health():
         return {"status": "ok", "version": "1.0.0"}
 
-    # Mount static files (frontend)
+    # Serve index.html with BOT_USERNAME injected
     import os
+    from fastapi.responses import HTMLResponse
+
     public_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public")
-    app.mount("/", StaticFiles(directory=public_dir, html=True), name="public")
+    index_path = os.path.join(public_dir, "index.html")
+
+    @app.get("/", response_class=HTMLResponse)
+    async def serve_index():
+        with open(index_path, "r", encoding="utf-8") as f:
+            html = f.read()
+        html = html.replace("BOT_USERNAME_PLACEHOLDER", settings.BOT_USERNAME or "TelegramTreeBot")
+        return HTMLResponse(html)
+
+    # Mount static files for any other assets (favicon, etc.)
+    app.mount("/", StaticFiles(directory=public_dir, html=False), name="public")
 
     return app
 

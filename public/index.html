@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="bot-username" content="BOT_USERNAME_PLACEHOLDER">
   <title>TelegramTree</title>
   
   <!-- REQUIRED EXTERNALS -->
@@ -10,20 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
   <style>
-    /* 
-     * TELEGRAM CSS THEME VARIABLES
-     * Variables provistas por Telegram:
-     * --tg-theme-bg-color
-     * --tg-theme-text-color
-     * --tg-theme-hint-color
-     * --tg-theme-link-color
-     * --tg-theme-button-color
-     * --tg-theme-button-text-color
-     * --tg-theme-secondary-bg-color
-     */
-
     :root {
-      /* Fallbacks base en caso de desarrollo sin Telegram WebApp wrapper */
       --bg-color: var(--tg-theme-bg-color, #ffffff);
       --text-color: var(--tg-theme-text-color, #000000);
       --hint-color: var(--tg-theme-hint-color, #999999);
@@ -31,7 +19,6 @@
       --btn-color: var(--tg-theme-button-color, #3390ec);
       --btn-text-color: var(--tg-theme-button-text-color, #ffffff);
       --sec-bg-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
-      
       --danger-color: #ef4444;
       --success-color: #22c55e;
       --border-radius: 12px;
@@ -50,7 +37,6 @@
       overflow-x: hidden;
     }
 
-    /* Vistas base */
     .view {
       display: none;
       padding: var(--spacing);
@@ -58,233 +44,69 @@
       opacity: 0;
       transform: translateY(10px);
     }
-    
     .view.active { display: block; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
 
-    @keyframes fadeIn {
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Tipografía común */
     h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
     h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
     p { font-size: 15px; line-height: 1.4; color: var(--hint-color); }
 
-    /* Componentes */
-    .tg-card {
-      background: var(--sec-bg-color);
-      border-radius: var(--border-radius);
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-
+    .tg-card { background: var(--sec-bg-color); border-radius: var(--border-radius); padding: 16px; margin-bottom: 16px; }
     .tg-input {
-      width: 100%;
-      background: var(--bg-color);
-      border: 1px solid var(--hint-color);
-      color: var(--text-color);
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 16px; /* evita zoom en iOS */
-      margin-bottom: 12px;
-      outline: none;
-      transition: border-color 0.2s;
+      width: 100%; background: var(--bg-color); border: 1px solid var(--hint-color);
+      color: var(--text-color); border-radius: 8px; padding: 12px; font-size: 16px;
+      margin-bottom: 12px; outline: none; transition: border-color 0.2s;
     }
     .tg-input:focus { border-color: var(--btn-color); }
     .tg-input::placeholder { color: var(--hint-color); opacity: 0.5; }
-
-    .tg-textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
+    .tg-textarea { resize: vertical; min-height: 80px; }
 
     .tg-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: var(--border-radius);
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      text-align: center;
-      transition: opacity 0.2s;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
+      width: 100%; padding: 14px; border-radius: var(--border-radius); font-size: 16px;
+      font-weight: 600; border: none; cursor: pointer; text-align: center;
+      transition: opacity 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px;
     }
     .tg-btn:active { opacity: 0.8; }
     .tg-btn:disabled { opacity: 0.5; pointer-events: none; }
-
     .tg-btn-primary { background: var(--btn-color); color: var(--btn-text-color); }
     .tg-btn-secondary { background: var(--sec-bg-color); color: var(--text-color); }
     .tg-btn-ghost { background: transparent; color: var(--link-color); border: 1px solid var(--link-color); }
     .tg-btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger-color); }
-    
-    /* Segmented Control */
-    .segmented-control {
-      display: flex;
-      background: var(--sec-bg-color);
-      border-radius: 8px;
-      padding: 4px;
-      margin-bottom: 16px;
-      overflow-x: auto;
-    }
-    .segmented-btn {
-      flex: 1;
-      padding: 8px 12px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--hint-color);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-    .segmented-btn.active {
-      background: var(--bg-color);
-      color: var(--text-color);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
 
-    /* Avatares */
-    .avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: var(--btn-color);
-      color: var(--btn-text-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      font-weight: bold;
-      object-fit: cover;
-      margin: 0 auto 16px;
-    }
+    .segmented-control { display: flex; background: var(--sec-bg-color); border-radius: 8px; padding: 4px; margin-bottom: 16px; overflow-x: auto; }
+    .segmented-btn { flex: 1; padding: 8px 12px; text-align: center; font-size: 14px; font-weight: 500; color: var(--hint-color); border-radius: 6px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .segmented-btn.active { background: var(--bg-color); color: var(--text-color); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
-    /* Badges */
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
+    .avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--btn-color); color: var(--btn-text-color); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; object-fit: cover; margin: 0 auto 16px; }
+
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
     .plan-free { background: var(--hint-color); color: var(--bg-color); }
     .plan-pro { background: var(--btn-color); color: var(--btn-text-color); }
     .plan-business { background: #fbbf24; color: #000; }
-    
-    .lock-badge {
-      font-size: 12px;
-      background: rgba(0,0,0,0.1);
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
+    .lock-badge { font-size: 12px; background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 4px; }
 
-    /* Link Cards */
-    .link-card {
-      background: var(--bg-color);
-      border: 1px solid var(--sec-bg-color);
-      border-radius: var(--border-radius);
-      padding: 12px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .link-card.has-lock {
-      border-color: var(--hint-color);
-      position: relative;
-    }
-    
-    .drag-handle {
-      color: var(--hint-color);
-      cursor: grab;
-      font-size: 20px;
-      padding: 0 8px;
-    }
-    
+    .link-card { background: var(--bg-color); border: 1px solid var(--sec-bg-color); border-radius: var(--border-radius); padding: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+    .link-card.has-lock { border-color: var(--hint-color); position: relative; }
+    .drag-handle { color: var(--hint-color); cursor: grab; font-size: 20px; padding: 0 8px; }
     .link-content { flex: 1; min-width: 0; }
     .link-title { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .link-url { font-size: 13px; color: var(--link-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    
     .link-actions { display: flex; gap: 8px; }
-    .icon-btn {
-      background: var(--sec-bg-color);
-      border: none;
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--text-color);
-      cursor: pointer;
-    }
+    .icon-btn { background: var(--sec-bg-color); border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-color); cursor: pointer; }
 
-    /* Lock Overlay */
-    .lock-overlay {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(var(--bg-color-rgb), 0.85); /* Placeholder, we'll use CSS filter or solid color */
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      border-radius: calc(var(--border-radius) - 1px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      gap: 8px;
-    }
-    .lock-overlay.unlocked {
-      animation: unlockFade 0.5s ease-out forwards;
-      pointer-events: none;
-    }
-    @keyframes unlockFade {
-      to { opacity: 0; visibility: hidden; transform: scale(1.05); }
-    }
-
-    /* Public Profile specifics */
     .public-link-btn {
-      width: 100%;
-      background: var(--sec-bg-color);
-      border: 1px solid transparent;
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      text-align: center;
-      color: var(--text-color);
-      font-weight: 600;
-      font-size: 16px;
-      text-decoration: none;
-      display: block;
-      transition: transform 0.1s, background-color 0.2s;
-      position: relative;
-      overflow: hidden;
+      width: 100%; background: var(--sec-bg-color); border: 1px solid transparent; padding: 16px;
+      border-radius: 12px; margin-bottom: 12px; text-align: center; color: var(--text-color);
+      font-weight: 600; font-size: 16px; text-decoration: none; display: block;
+      transition: transform 0.1s, background-color 0.2s; position: relative; overflow: hidden;
     }
     .public-link-btn:active { transform: scale(0.98); }
     .public-link-icon { font-size: 20px; margin-right: 8px; vertical-align: middle; }
 
-    /* Emoji Picker Simple */
-    .emoji-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .emoji-item {
-      font-size: 24px;
-      text-align: center;
-      padding: 8px;
-      background: var(--sec-bg-color);
-      border-radius: 8px;
-      cursor: pointer;
-      border: 2px solid transparent;
-    }
+    .emoji-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
+    .emoji-item { font-size: 24px; text-align: center; padding: 8px; background: var(--sec-bg-color); border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
     .emoji-item.selected { border-color: var(--btn-color); }
 
-    /* Utilities */
     .text-center { text-align: center; }
     .mt-4 { margin-top: 16px; }
     .mb-4 { margin-bottom: 16px; }
@@ -292,89 +114,61 @@
     .hidden { display: none !important; }
     .w-full { width: 100%; }
 
-    /* Skeleton Loading */
-    .skeleton {
-      background: linear-gradient(90deg, var(--sec-bg-color) 25%, var(--bg-color) 50%, var(--sec-bg-color) 75%);
-      background-size: 200% 100%;
-      animation: load 1.5s infinite;
-      border-radius: 8px;
-    }
+    .skeleton { background: linear-gradient(90deg, var(--sec-bg-color) 25%, var(--bg-color) 50%, var(--sec-bg-color) 75%); background-size: 200% 100%; animation: load 1.5s infinite; border-radius: 8px; }
     @keyframes load { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 
-    /* Toggle Switch */
-    .toggle-switch {
-      position: relative;
-      width: 44px; height: 24px;
-      appearance: none;
-      background: var(--hint-color);
-      border-radius: 12px;
-      outline: none;
-      box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-      transition: background 0.3s;
-      cursor: pointer;
-    }
+    .toggle-switch { position: relative; width: 44px; height: 24px; appearance: none; background: var(--hint-color); border-radius: 12px; outline: none; box-shadow: inset 0 0 5px rgba(0,0,0,0.2); transition: background 0.3s; cursor: pointer; }
     .toggle-switch:checked { background: var(--success-color); }
-    .toggle-switch::after {
-      content: ''; position: absolute; top: 2px; left: 2px;
-      width: 20px; height: 20px; border-radius: 50%;
-      background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      transition: transform 0.3s;
-    }
+    .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.3s; }
     .toggle-switch:checked::after { transform: translateX(20px); }
 
-    /* Dashboard Tab Bar */
-    .tab-bar {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(255,255,255,0.8); /* fallback */
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-top: 1px solid var(--sec-bg-color);
-      display: flex; justify-content: space-around;
-      padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
-      z-index: 100;
-    }
-    /* We need to use var for dark mode support in tab bar */
-    @media (prefers-color-scheme: dark) {
-      .tab-bar { background: rgba(0,0,0,0.8); }
-    }
-    .tab-item {
-      text-align: center; color: var(--hint-color); font-size: 12px; cursor: pointer;
-    }
+    .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid var(--sec-bg-color); display: flex; justify-content: space-around; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); z-index: 100; }
+    @media (prefers-color-scheme: dark) { .tab-bar { background: rgba(0,0,0,0.8); } }
+    .tab-item { text-align: center; color: var(--hint-color); font-size: 12px; cursor: pointer; }
     .tab-item.active { color: var(--btn-color); font-weight: 600; }
     .tab-icon { font-size: 20px; margin-bottom: 2px; display: block; }
-    
-    /* View Padding for TabBar */
-    #view-dashboard, #view-analytics { padding-bottom: 80px; }
 
-    /* Analytics Chart */
-    .chart-container {
-      width: 100%; height: 200px;
-      background: var(--sec-bg-color);
-      border-radius: var(--border-radius);
-      padding: 16px; margin-top: 16px;
-    }
-    .stats-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;
-    }
-    .stat-card {
-      background: var(--sec-bg-color); padding: 16px; border-radius: var(--border-radius); text-align: center;
-    }
+    #view-dashboard, #view-analytics, #view-settings, #view-explore { padding-bottom: 80px; }
+
+    .chart-container { width: 100%; height: 200px; background: var(--sec-bg-color); border-radius: var(--border-radius); padding: 16px; margin-top: 16px; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .stat-card { background: var(--sec-bg-color); padding: 16px; border-radius: var(--border-radius); text-align: center; }
     .stat-val { font-size: 24px; font-weight: bold; color: var(--btn-color); }
-    
-    /* Top Links Table */
     .top-links-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
     .top-links-table th { text-align: left; padding: 8px; color: var(--hint-color); border-bottom: 1px solid var(--sec-bg-color); }
     .top-links-table td { padding: 8px; border-bottom: 1px solid var(--sec-bg-color); }
-    
-    /* Upgrade Overlay */
-    .upgrade-overlay {
-      position: absolute; top:0; left:0; right:0; bottom:0;
-      background: rgba(var(--bg-color-rgb), 0.7);
-      backdrop-filter: blur(5px);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      border-radius: var(--border-radius); z-index: 5;
-    }
+    .upgrade-overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.7); backdrop-filter: blur(5px); display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: var(--border-radius); z-index: 5; }
 
+    /* Explore View */
+    .explore-card { background: var(--sec-bg-color); border-radius: var(--border-radius); padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: transform 0.1s; }
+    .explore-card:active { transform: scale(0.98); }
+    .explore-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--btn-color); color: var(--btn-text-color); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; flex-shrink: 0; }
+    .explore-info { flex: 1; min-width: 0; }
+    .explore-name { font-weight: 600; font-size: 16px; }
+    .explore-slug { font-size: 13px; color: var(--hint-color); }
+    .explore-bio { font-size: 13px; color: var(--hint-color); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .explore-meta { font-size: 12px; color: var(--link-color); margin-top: 4px; }
+
+    /* Settings View */
+    .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .theme-card { background: var(--sec-bg-color); border-radius: var(--border-radius); padding: 12px; text-align: center; cursor: pointer; border: 2px solid transparent; position: relative; }
+    .theme-card.selected { border-color: var(--btn-color); }
+    .theme-swatch { width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 8px; }
+    .theme-name { font-size: 12px; font-weight: 500; }
+    .theme-lock-overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.3); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; }
+
+    /* Share Menu */
+    .share-menu { margin-top: 8px; display: none; }
+    .share-menu.open { display: block; }
+
+    /* Accordion */
+    .accordion-header { cursor: pointer; padding: 12px 0; font-weight: 600; color: var(--danger-color); }
+    .accordion-content { display: none; }
+    .accordion-content.open { display: block; }
+
+    /* Chart Legend */
+    .chart-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; align-items: center; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle; }
   </style>
 </head>
 <body>
@@ -406,14 +200,12 @@
         <h1>Crea tu TelegramTree</h1>
         <p>Configura tu perfil público para compartir tus enlaces.</p>
       </div>
-
       <div class="tg-card">
         <h2>1. Elige tu enlace (@slug)</h2>
         <input type="text" id="ob-slug" class="tg-input" placeholder="ej. mi_tienda" autocorrect="off" autocapitalize="none">
         <p id="ob-slug-feedback" style="font-size: 13px; margin-bottom: 16px;">Solo minúsculas, números y guiones.</p>
         <p style="font-size: 13px; color: var(--btn-color); word-break: break-all;">Tu link: t.me/<span id="ob-botname">Bot</span>/app?startapp=<strong id="ob-slug-preview">...</strong></p>
       </div>
-
       <div class="tg-card">
         <h2>2. Nombre a mostrar</h2>
         <input type="text" id="ob-name" class="tg-input" placeholder="Tu Nombre o Marca">
@@ -429,9 +221,17 @@
         <div style="margin-top: 8px;">
           <span id="dash-plan-badge" class="badge plan-free">FREE</span>
         </div>
+        <div id="dash-verified-upsell" class="hidden" style="margin-top:6px; font-size:12px; color: var(--hint-color);">
+          ¿Quieres ✓ Verificado? → <a href="#" id="dash-upsell-link" style="color:var(--link-color);">Ver Pro</a>
+        </div>
         <div class="flex-between mt-4">
-          <button class="tg-btn tg-btn-secondary" style="flex:1; margin-right: 8px;" id="btn-share-profile">📝 Compartir</button>
+          <button class="tg-btn tg-btn-secondary" style="flex:1; margin-right: 8px;" id="btn-share-profile">📤 Compartir</button>
           <button class="tg-btn tg-btn-ghost" style="flex:1;" id="btn-view-public">👁️ Ver Perfil</button>
+        </div>
+        <!-- Share Menu -->
+        <div class="share-menu" id="share-menu">
+          <button class="tg-btn tg-btn-secondary mb-4" id="btn-copy-link" style="margin-top:8px;">📋 Copiar enlace</button>
+          <button class="tg-btn tg-btn-secondary" id="btn-share-tg">💬 Compartir en Telegram</button>
         </div>
       </div>
 
@@ -439,27 +239,18 @@
         <h2>Mis links (<span id="dash-link-count">0</span>/<span id="dash-link-max">5</span>)</h2>
         <button class="icon-btn" id="btn-add-link" style="background: var(--btn-color); color: var(--btn-text-color);">➕</button>
       </div>
+      <div id="links-list" style="min-height: 100px;"></div>
 
-      <div id="links-list" style="min-height: 100px;">
-        <!-- Filled by JS via Sortable -->
-        <p class="text-center">Cargando...</p>
-      </div>
-
-      <!-- Bottom Tab Bar -->
       <div class="tab-bar">
-        <div class="tab-item active" data-tab="dashboard">
-          <span class="tab-icon">✨</span> Links
-        </div>
-        <div class="tab-item" data-tab="analytics">
-          <span class="tab-icon">📊</span> Analytics
-        </div>
+        <div class="tab-item active" data-tab="dashboard"><span class="tab-icon">✨</span> Links</div>
+        <div class="tab-item" data-tab="analytics"><span class="tab-icon">📊</span> Analytics</div>
+        <div class="tab-item" data-tab="settings"><span class="tab-icon">⚙️</span> Ajustes</div>
       </div>
     </section>
 
-    <!-- View: Link Editor (also acts as Lock Editor) -->
+    <!-- View: Link Editor -->
     <section id="view-link-editor" class="view">
       <h2 id="link-editor-title">Añadir link</h2>
-      
       <div class="tg-card">
         <label style="font-weight:600; font-size:14px; margin-bottom:4px; display:block;">Tipo de Link</label>
         <div class="segmented-control" id="link-type-control">
@@ -467,25 +258,18 @@
           <div class="segmented-btn" data-type="telegram_channel">📢 Canal</div>
           <div class="segmented-btn" data-type="telegram_bot">🤖 Bot</div>
         </div>
-
         <input type="text" id="le-title" class="tg-input" placeholder="Título (ej. Mi Web Oficial)">
         <input type="url" id="le-url" class="tg-input" placeholder="https://..." autocorrect="off" autocapitalize="none">
-        
         <label style="font-weight:600; font-size:14px; margin-bottom:4px; display:block;">Descripción (opcional)</label>
         <textarea id="le-desc" class="tg-input tg-textarea" placeholder="Escribe algo sobre este link..."></textarea>
-        
         <label style="font-weight:600; font-size:14px; margin-bottom:4px; display:block;">Icono (Emoji)</label>
-        <div class="emoji-grid" id="le-emoji-grid">
-          <!-- Emojis populated by JS -->
-        </div>
+        <div class="emoji-grid" id="le-emoji-grid"></div>
         <input type="text" id="le-icon-custom" class="tg-input" placeholder="O pega un emoji aquí" maxlength="2">
-        
         <div class="flex-between mt-4">
           <label style="font-weight:600;">Enlace activo</label>
           <input type="checkbox" id="le-active" class="toggle-switch" checked>
         </div>
       </div>
-
       <!-- Lock Configuration Section -->
       <div class="tg-card" id="le-lock-section">
         <div class="flex-between">
@@ -493,26 +277,23 @@
           <span id="le-lock-status" class="lock-badge" style="display:none;">Activo</span>
         </div>
         <p style="margin-top: 8px; margin-bottom: 12px; font-size: 13px;">Requiere una acción antes de acceder al enlace.</p>
-        
         <div id="le-no-lock">
           <button class="tg-btn tg-btn-secondary" id="btn-add-lock">Añadir Bloqueo</button>
         </div>
-
         <div id="le-has-lock" class="hidden">
           <div class="segmented-control w-full" id="lock-type-control">
             <div class="segmented-btn active" data-type="channel_join">👥 Canal</div>
-            <!-- Other types hidden if free plan -->
-            <div class="segmented-btn" data-type="payment" id="lock-type-payment" style="display:none;">💰 Pago</div>
+            <div class="segmented-btn" data-type="payment" id="lock-type-payment">💰 Pago</div>
           </div>
-
-          <!-- Config: Channel Join -->
+          <div id="le-payment-upsell" class="hidden" style="background:rgba(51,144,236,0.1); padding:10px; border-radius:8px; margin-bottom:12px; font-size:13px;">
+            💰 Lock de pago disponible en Pro — monetiza tu contenido directamente.
+            <a href="#" id="le-payment-upsell-link" style="color:var(--link-color); display:block; margin-top:4px;">Ver planes →</a>
+          </div>
           <div id="lock-config-channel">
             <input type="text" id="lc-channel-id" class="tg-input" placeholder="@usuario o ID (ej. -100123...)">
             <p style="font-size:12px; margin-top:-8px; margin-bottom:12px;">Tu bot debe ser administrador full en este canal.</p>
             <input type="text" id="lc-channel-name" class="tg-input" placeholder="Nombre visible (ej. Mi Canal VIP)">
           </div>
-
-          <!-- Config: Payment -->
           <div id="lock-config-payment" class="hidden">
             <input type="number" id="lc-pay-amount" class="tg-input" placeholder="Cantidad" min="1">
             <select id="lc-pay-currency" class="tg-input">
@@ -520,7 +301,6 @@
               <option value="USD">Dólares (USD)</option>
             </select>
           </div>
-
           <button class="tg-btn tg-btn-danger mt-4" id="btn-remove-lock">Eliminar Bloqueo</button>
         </div>
       </div>
@@ -536,67 +316,78 @@
           <option value="90d">90 Días</option>
         </select>
       </div>
-
       <div style="position: relative;">
-        <!-- Stats Grid -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-val" id="an-views">0</div>
-            <div style="font-size:12px; color:var(--hint-color);">Vistas Perfil</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val" id="an-clicks">0</div>
-            <div style="font-size:12px; color:var(--hint-color);">Clics Links</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val" id="an-ctr">0%</div>
-            <div style="font-size:12px; color:var(--hint-color);">CTR</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val" id="an-unlocks">0</div>
-            <div style="font-size:12px; color:var(--hint-color);">Desbloqueos</div>
-          </div>
+          <div class="stat-card"><div class="stat-val" id="an-views">0</div><div style="font-size:12px; color:var(--hint-color);">Vistas Perfil</div></div>
+          <div class="stat-card"><div class="stat-val" id="an-clicks">0</div><div style="font-size:12px; color:var(--hint-color);">Clics Links</div></div>
+          <div class="stat-card"><div class="stat-val" id="an-ctr">0%</div><div style="font-size:12px; color:var(--hint-color);">CTR</div></div>
+          <div class="stat-card"><div class="stat-val" id="an-unlocks">0</div><div style="font-size:12px; color:var(--hint-color);">Desbloqueos</div></div>
         </div>
-
-        <!-- Simulated Chart Area -->
         <div class="chart-container">
-          <h3 style="font-size:14px; margin-bottom: 8px;">Actividad (Simplificada)</h3>
-          <!-- Vanilla SVG Chart -->
-          <svg id="an-chart" width="100%" height="130" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <!-- Drawn via JS -->
-          </svg>
+          <div class="flex-between">
+            <h3 style="font-size:14px;">Actividad</h3>
+            <div class="chart-legend">
+              <span><span class="legend-dot" style="background:var(--btn-color);"></span>Vistas</span>
+              <span><span class="legend-dot" style="background:var(--success-color);"></span>Clics</span>
+            </div>
+          </div>
+          <svg id="an-chart" width="100%" height="140" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
         </div>
-
         <div class="tg-card mt-4">
           <h3 style="font-size: 15px; margin-bottom: 8px;">Top Links</h3>
           <table class="top-links-table" id="an-top-table">
-            <thead>
-              <tr>
-                <th>Link</th>
-                <th>Clics</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- JS rendered -->
-            </tbody>
+            <thead><tr><th>Link</th><th>Clics</th></tr></thead>
+            <tbody></tbody>
           </table>
         </div>
-
-        <!-- Upgrade Overlay for restricted periods -->
         <div id="an-upgrade-overlay" class="upgrade-overlay hidden">
           <h3 style="margin-bottom: 8px;">Métrica Restringida</h3>
           <p style="font-size:13px; text-align:center; padding: 0 20px; color:var(--text-color);">Requieres un plan superior para ver histórico largo.</p>
-          <button class="tg-btn tg-btn-primary mt-4" style="width: auto; padding: 8px 16px;">Subir de Plan</button>
+          <button class="tg-btn tg-btn-primary mt-4" style="width: auto; padding: 8px 16px;" id="an-upgrade-btn">Subir de Plan</button>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab-item" data-tab="dashboard"><span class="tab-icon">✨</span> Links</div>
+        <div class="tab-item active" data-tab="analytics"><span class="tab-icon">📊</span> Analytics</div>
+        <div class="tab-item" data-tab="settings"><span class="tab-icon">⚙️</span> Ajustes</div>
+      </div>
+    </section>
+
+    <!-- View: Settings -->
+    <section id="view-settings" class="view">
+      <h1 class="mb-4">⚙️ Ajustes</h1>
+
+      <div class="tg-card">
+        <h2>Perfil público</h2>
+        <label style="font-weight:500; font-size:14px; margin-bottom:4px; display:block;">Nombre a mostrar</label>
+        <input type="text" id="set-name" class="tg-input" maxlength="128">
+        <label style="font-weight:500; font-size:14px; margin-bottom:4px; display:block;">Bio</label>
+        <textarea id="set-bio" class="tg-input tg-textarea" maxlength="256" placeholder="Cuéntale al mundo algo sobre ti..."></textarea>
+        <button class="tg-btn tg-btn-primary" id="btn-save-profile">Guardar cambios</button>
+      </div>
+
+      <div class="tg-card">
+        <h2>Tema visual</h2>
+        <div class="theme-grid" id="theme-grid"></div>
+      </div>
+
+      <div class="tg-card">
+        <h2>Tu plan</h2>
+        <div id="set-plan-info"></div>
+      </div>
+
+      <div class="tg-card" style="border: 1px solid var(--danger-color);">
+        <div class="accordion-header" id="danger-toggle">⚠️ Zona de peligro</div>
+        <div class="accordion-content" id="danger-content">
+          <p style="margin-bottom:12px;">Eliminar tu cuenta borrará todo tu perfil, links y analíticas. Esta acción es irreversible.</p>
+          <button class="tg-btn tg-btn-danger" id="btn-delete-account">Eliminar mi cuenta</button>
         </div>
       </div>
 
       <div class="tab-bar">
-        <div class="tab-item" data-tab="dashboard">
-          <span class="tab-icon">✨</span> Links
-        </div>
-        <div class="tab-item active" data-tab="analytics">
-          <span class="tab-icon">📊</span> Analytics
-        </div>
+        <div class="tab-item" data-tab="dashboard"><span class="tab-icon">✨</span> Links</div>
+        <div class="tab-item" data-tab="analytics"><span class="tab-icon">📊</span> Analytics</div>
+        <div class="tab-item active" data-tab="settings"><span class="tab-icon">⚙️</span> Ajustes</div>
       </div>
     </section>
 
@@ -607,29 +398,31 @@
         <h1 id="pub-name" style="font-size:22px; margin-bottom:4px;">...</h1>
         <p id="pub-bio" style="font-size:14px; margin-bottom:16px;">...</p>
       </div>
-
-      <div id="pub-links-container">
-        <!-- Rendered by JS -->
-      </div>
-      
-      <!-- Footer branding -->
+      <div id="pub-links-container"></div>
       <div class="text-center mt-4">
-        <a href="#" id="pub-branding-link" style="font-size: 12px; color: var(--hint-color); text-decoration: none;">⚡ Creado con TelegramTree</a>
+        <a href="#" id="pub-branding-link" style="font-size: 12px; color: var(--hint-color); text-decoration: none;">⚡ Crea tu TelegramTree gratis</a>
       </div>
-      
-      <!-- Editor FAB if owner -->
       <div id="pub-fab-edit" class="hidden" style="position:fixed; bottom:20px; right:20px; z-index:100;">
         <button class="icon-btn" style="width:48px; height:48px; background:var(--btn-color); color:var(--btn-text-color); box-shadow:0 4px 10px rgba(0,0,0,0.3);" onclick="appRouter.navigate('dashboard')">✏️</button>
       </div>
     </section>
 
+    <!-- View: Explore -->
+    <section id="view-explore" class="view">
+      <h1 class="mb-4">🌍 Explorar Perfiles</h1>
+      <input type="text" id="explore-search" class="tg-input" placeholder="Buscar por nombre o @slug...">
+      <div id="explore-list"></div>
+      <div id="explore-sentinel" style="height: 1px;"></div>
+      <div id="explore-loading" class="text-center hidden" style="padding:16px;">
+        <div class="skeleton" style="width:100%; height:60px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="width:100%; height:60px;"></div>
+      </div>
+    </section>
+
   </main>
 
-  <!-- ============================================== -->
-  <!-- JAVASCRIPT APPLICATION LOGIC                   -->
-  <!-- ============================================== -->
   <script type="module">
-    // --- 1. INITIALIZATION & TELEGRAM SDK ---
+    // ── 1. TELEGRAM SDK INIT ──
     let tg = null;
     let isDev = false;
     try {
@@ -638,63 +431,49 @@
       }
     } catch (e) {}
 
-    // DEV MODE Fallback
     if (!tg || !tg.initData) {
-      console.warn("⚠️ Running outside Telegram WebApp. Using DEV_MODE mock data.");
+      console.warn("⚠️ DEV_MODE: Running outside Telegram WebApp.");
       isDev = true;
       tg = {
         initData: "dev_mock_data_signature",
         initDataUnsafe: {
           user: { id: 123456789, first_name: "Dev User", username: "devuser" },
-          start_param: new URLSearchParams(window.location.search).get('startapp') // fallback read from URL
+          start_param: new URLSearchParams(window.location.search).get('startapp')
         },
         themeParams: {},
-        ready: () => console.log('tg.ready() called'),
-        expand: () => console.log('tg.expand() called'),
-        close: () => console.log('tg.close() called'),
+        ready: () => {},
+        expand: () => {},
+        close: () => console.log('tg.close()'),
         MainButton: {
-          isVisible: false,
-          text: '',
-          show: function() { this.isVisible = true; console.log('[MainButton] Show'); },
-          hide: function() { this.isVisible = false; console.log('[MainButton] Hide'); },
-          setText: function(t) { this.text = t; console.log('[MainButton] Text:', t); },
-          onClick: function(cb) { this._cb = cb; },
-          offClick: function(cb) { this._cb = null; },
-          showProgress: () => console.log('[MainButton] Prog Show'),
-          hideProgress: () => console.log('[MainButton] Prog Hide'),
-          trigger: function() { if(this._cb) this._cb(); }
+          isVisible: false, text: '', _cb: null,
+          show() { this.isVisible = true; }, hide() { this.isVisible = false; },
+          setText(t) { this.text = t; },
+          onClick(cb) { this._cb = cb; }, offClick() { this._cb = null; },
+          showProgress() {}, hideProgress() {},
         },
         BackButton: {
-          isVisible: false,
-          show: function() { this.isVisible = true; },
-          hide: function() { this.isVisible = false; },
-          onClick: function(cb) { this._cb = cb; },
-          offClick: function(cb) { this._cb = null; },
-          trigger: function() { if(this._cb) this._cb(); }
+          isVisible: false, _cb: null,
+          show() { this.isVisible = true; }, hide() { this.isVisible = false; },
+          onClick(cb) { this._cb = cb; }, offClick() { this._cb = null; },
         },
         showAlert: (msg) => alert(msg),
-        showConfirm: (msg, cb) => { const res = confirm(msg); if(cb) cb(res); },
+        showConfirm: (msg, cb) => { if(cb) cb(confirm(msg)); },
         openLink: (url) => window.open(url, '_blank'),
-        switchInlineQuery: (query) => console.log('[InlineQuery]', query),
-        HapticFeedback: {
-          impactOccurred: () => {}, notificationOccurred: () => {}
-        }
+        switchInlineQuery: () => {},
+        HapticFeedback: { impactOccurred() {}, notificationOccurred() {} }
       };
     }
 
     tg.ready();
     tg.expand();
 
-    // The API might be relative if served from FastAPI server, or full URL
-    // If DEV mode, we fallback to localhost:3000 mapping
+    const BOT_USERNAME = document.querySelector('meta[name="bot-username"]').content;
     const API_BASE = isDev ? "http://localhost:3000/api" : "/api";
-
-    // Extract Context
     const initData = tg.initData;
     const currentUser = tg.initDataUnsafe?.user || {};
     const startParam = tg.initDataUnsafe?.start_param;
 
-    // --- 2. STATE MANAGEMENT ---
+    // ── 2. STATE ──
     const state = {
       currentView: 'loading',
       currentUser: currentUser,
@@ -707,127 +486,79 @@
       unlockedLocks: new Set()
     };
 
-    const RESERVED_SLUGS = ['api', 'app', 'admin', 'www', 'static', 'me', 'help', 'bot', 'support', 'login'];
+    const RESERVED_SLUGS = ['api', 'app', 'admin', 'www', 'static', 'me', 'help', 'bot', 'support', 'login', 'explore'];
 
     function getInitials(name) {
       if (!name) return "?";
       return name.substring(0, 2).toUpperCase();
     }
 
-    // --- 3. API MODULE ---
+    // ── 3. API MODULE ──
     const api = {
       async fetch(path, options = {}) {
-        const headers = {
-          'Content-Type': 'application/json',
-          'X-Telegram-Init-Data': initData
-        };
-        
-        const config = {
-          ...options,
-          headers: { ...headers, ...options.headers }
-        };
-
+        const headers = { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': initData };
+        const config = { ...options, headers: { ...headers, ...options.headers } };
         try {
           const response = await fetch(`${API_BASE}${path}`, config);
-          
-          if (response.status === 401) {
-            tg.showAlert("Sesión expirada. Cierra la Mini App y vuelve a abrirla.");
-            throw new Error("401");
-          }
-          if (response.status === 429) {
-            tg.showAlert("Demasiadas solicitudes. Por favor, espera unos segundos y reintenta.");
-            throw new Error("429");
-          }
-
+          if (response.status === 401) { tg.showAlert("Sesión expirada. Cierra la Mini App y vuelve a abrirla."); throw new Error("[401]"); }
+          if (response.status === 429) { tg.showAlert("Demasiadas solicitudes. Espera unos segundos."); throw new Error("[429]"); }
           let data = null;
-          if (response.status !== 204) {
-            try { data = await response.json(); } catch(e){}
-          }
-
+          if (response.status !== 204) { try { data = await response.json(); } catch(e){} }
           if (!response.ok) {
             const msg = data?.error || data?.detail || `Error ${response.status}`;
-            if (response.status !== 404) {
-              tg.showAlert(msg);
-            }
+            if (response.status !== 404) tg.showAlert(msg);
             throw new Error(`[${response.status}] ${msg}`);
           }
-          
           return data;
-        } catch (error) {
-          console.error("API Error:", error);
-          throw error;
-        }
+        } catch (error) { console.error("API Error:", error); throw error; }
       },
-
-      // Profiles
       getMyProfile: () => api.fetch('/profiles/me'),
       createProfile: (slug, display_name) => api.fetch('/profiles', { method: 'POST', body: JSON.stringify({ slug, display_name }) }),
+      updateProfile: (fields) => api.fetch('/profiles/me', { method: 'PATCH', body: JSON.stringify(fields) }),
+      deleteProfile: () => api.fetch('/profiles/me', { method: 'DELETE' }),
       getPublicProfile: (slug) => {
-        // Cache implementation for GET (60s)
-        const cacheKey = `cache:GET:/profiles/${slug}`;
-        const cached = sessionStorage.getItem(cacheKey);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Date.now() - parsed.ts < 60000) return Promise.resolve(parsed.data);
-        }
-        return api.fetch(`/profiles/${slug}`).then(data => {
-          sessionStorage.setItem(cacheKey, JSON.stringify({ts: Date.now(), data}));
-          return data;
-        });
+        const ck = `cache:GET:/profiles/${slug}`;
+        const cached = sessionStorage.getItem(ck);
+        if (cached) { const p = JSON.parse(cached); if (Date.now() - p.ts < 60000) return Promise.resolve(p.data); }
+        return api.fetch(`/profiles/${slug}`).then(d => { sessionStorage.setItem(ck, JSON.stringify({ts: Date.now(), data: d})); return d; });
       },
-
-      // Links
+      explore: (limit, offset, search) => {
+        let q = `/profiles?limit=${limit}&offset=${offset}`;
+        if (search) q += `&search=${encodeURIComponent(search)}`;
+        return api.fetch(q);
+      },
       addLink: (body) => api.fetch('/profiles/me/links', { method: 'POST', body: JSON.stringify(body) }),
       editLink: (id, body) => api.fetch(`/profiles/me/links/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
       deleteLink: (id) => api.fetch(`/profiles/me/links/${id}`, { method: 'DELETE' }),
       reorderLinks: (ids) => api.fetch('/profiles/me/links/reorder', { method: 'POST', body: JSON.stringify({ link_ids: ids }) }),
-
-      // Locks
       createLock: (body) => api.fetch('/locks', { method: 'POST', body: JSON.stringify(body) }),
       verifyLock: (id) => api.fetch(`/locks/${id}/verify`, { method: 'POST' }),
       deleteLock: (id) => api.fetch(`/locks/${id}`, { method: 'DELETE' }),
-
-      // Analytics
       trackEvent: (type, profile_id, link_id = null) => {
-        // Fire and forget, no await
-        fetch(`${API_BASE}/track`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ profile_id, event_type: type, link_id })
-        }).catch(e => console.warn("Track sync failed"));
+        fetch(`${API_BASE}/track`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ profile_id, event_type: type, link_id }) }).catch(() => {});
       },
       getAnalytics: (period) => api.fetch(`/profiles/me/analytics?period=${period}`)
     };
 
-    // Helper to invalidate caches
-    function invalidateCache() {
-      const keys = Object.keys(sessionStorage);
-      keys.forEach(k => { if(k.startsWith('cache:')) sessionStorage.removeItem(k); });
-    }
+    function invalidateCache() { Object.keys(sessionStorage).forEach(k => { if(k.startsWith('cache:')) sessionStorage.removeItem(k); }); }
 
-    // --- 4. ROUTER ---
+    // ── 4. ROUTER ──
     const appRouter = {
       views: document.querySelectorAll('.view'),
-      
-      hideAll() {
-        this.views.forEach(v => v.classList.remove('active'));
-        tg.MainButton.hide();
-        tg.BackButton.hide();
-      },
-
+      hideAll() { this.views.forEach(v => v.classList.remove('active')); tg.MainButton.hide(); tg.BackButton.hide(); },
       navigate(viewId) {
         state.currentView = viewId;
         this.hideAll();
         const v = document.getElementById(`view-${viewId}`);
         if(v) v.classList.add('active');
-        
-        // View specific initializations
         if (viewId === 'dashboard') initDashboardView();
+        else if (viewId === 'onboarding') initOnboardingView();
         else if (viewId === 'link-editor') initLinkEditorView();
         else if (viewId === 'public-profile') initPublicProfileView();
         else if (viewId === 'analytics') initAnalyticsView();
+        else if (viewId === 'settings') initSettingsView();
+        else if (viewId === 'explore') initExploreView();
       },
-
       showError(title, msg) {
         document.getElementById('error-title').innerText = title || "Error";
         document.getElementById('error-message').innerText = msg || "Ocurrió un problema.";
@@ -835,189 +566,129 @@
       }
     };
 
-
-    // --- 5. INITIAL STARTUP LOGIC ---
+    // ── 5. BOOT ──
     async function boot() {
       try {
+        if (startParam === 'explore') { appRouter.navigate('explore'); return; }
         if (startParam && startParam !== 'myprofile') {
-          // Navigated via deep link (visitor flow)
-          try {
-            state.publicProfile = await api.getPublicProfile(startParam);
-            appRouter.navigate('public-profile');
-          } catch(e) {
-            // Slug not found. Let's see if they have their own profile.
-            try {
-              state.myProfile = await api.getMyProfile();
-              appRouter.navigate('dashboard');
-            } catch(e2) {
-              appRouter.navigate('onboarding');
-            }
-          }
+          try { state.publicProfile = await api.getPublicProfile(startParam); appRouter.navigate('public-profile'); }
+          catch(e) { try { state.myProfile = await api.getMyProfile(); appRouter.navigate('dashboard'); } catch(e2) { appRouter.navigate('onboarding'); } }
         } else {
-          // Direct open (owner flow)
-          try {
-            state.myProfile = await api.getMyProfile();
-            appRouter.navigate('dashboard');
-          } catch(e) {
-            if (e.message.includes('404')) {
-               appRouter.navigate('onboarding');
-               initOnboardingView();
-            } else {
-               appRouter.showError("Error de Conexión", e.message);
-            }
-          }
+          try { state.myProfile = await api.getMyProfile(); appRouter.navigate('dashboard'); }
+          catch(e) { if (e.message.includes('404')) appRouter.navigate('onboarding'); else appRouter.showError("Error de Conexión", e.message); }
         }
-      } catch (err) {
-        appRouter.showError("Error Fatal", err.message);
-      }
+      } catch (err) { appRouter.showError("Error Fatal", err.message); }
     }
 
-
-    // --- 6. VIEW CONTROLLERS ---
-
-    // ----- ONBOARDING VIEW -----
+    // ── 6. VIEW: ONBOARDING ──
     function initOnboardingView() {
       const slugInput = document.getElementById('ob-slug');
       const nameInput = document.getElementById('ob-name');
       const preview = document.getElementById('ob-slug-preview');
       const feedback = document.getElementById('ob-slug-feedback');
-      
-      // Auto-populate
+      document.getElementById('ob-botname').innerText = BOT_USERNAME;
       if (currentUser.username) slugInput.value = currentUser.username.toLowerCase();
       if (currentUser.first_name) nameInput.value = currentUser.first_name;
 
-      if(tg.initDataUnsafe?.bot_inline_message) {
-        // Can't easily get bot username here unless passed, fallback
-      }
-
       tg.MainButton.setText('Crear mi perfil');
       tg.MainButton.show();
-      
       let debounceTimer;
       slugInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         let val = slugInput.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
         slugInput.value = val;
         preview.innerText = val || '...';
-        
-        if (val.length < 3) {
-          feedback.innerText = "Mínimo 3 caracteres.";
-          feedback.style.color = "var(--danger-color)";
-          return;
-        }
-        if (RESERVED_SLUGS.includes(val)) {
-          feedback.innerText = "Este nombre está reservado.";
-          feedback.style.color = "var(--danger-color)";
-          return;
-        }
-
-        feedback.innerText = "Comprobando...";
-        feedback.style.color = "var(--hint-color)";
-        
+        if (val.length < 3) { feedback.innerText = "Mínimo 3 caracteres."; feedback.style.color = "var(--danger-color)"; return; }
+        if (RESERVED_SLUGS.includes(val)) { feedback.innerText = "Este nombre está reservado."; feedback.style.color = "var(--danger-color)"; return; }
+        feedback.innerText = "Comprobando..."; feedback.style.color = "var(--hint-color)";
         debounceTimer = setTimeout(async () => {
-          try {
-            // Check if slug taken by fetching it
-            await api.getPublicProfile(val);
-            feedback.innerText = "❌ Enlace ya ocupado.";
-            feedback.style.color = "var(--danger-color)";
-          } catch(e) {
-            if (e.message.includes("404") || e.message.includes("not found")) {
-               feedback.innerText = "✅ Enlace disponible";
-               feedback.style.color = "var(--success-color)";
-            }
-          }
+          try { await api.getPublicProfile(val); feedback.innerText = "❌ Enlace ya ocupado."; feedback.style.color = "var(--danger-color)"; }
+          catch(e) { if (e.message.includes("404")) { feedback.innerText = "✅ Enlace disponible"; feedback.style.color = "var(--success-color)"; } }
         }, 500);
       });
-
-      // Submit
       tg.MainButton.onClick(async () => {
         const slug = slugInput.value.trim().toLowerCase();
         const name = nameInput.value.trim();
-        
-        if (slug.length < 3 || !name.length) {
-          tg.showAlert("Completa todos los campos.");
-          return;
-        }
-        if (feedback.innerText.includes("❌")) {
-          tg.showAlert("Elige un enlace disponible.");
-          tg.HapticFeedback.notificationOccurred('error');
-          return;
-        }
-
+        if (slug.length < 3 || !name.length) { tg.showAlert("Completa todos los campos."); return; }
+        if (feedback.innerText.includes("❌")) { tg.showAlert("Elige un enlace disponible."); return; }
         try {
           tg.MainButton.showProgress();
           state.myProfile = await api.createProfile(slug, name);
           tg.MainButton.hideProgress();
           tg.HapticFeedback.notificationOccurred('success');
           appRouter.navigate('dashboard');
-        } catch(e) {
-          tg.MainButton.hideProgress();
-        }
+        } catch(e) { tg.MainButton.hideProgress(); }
       });
     }
 
-    // ----- DASHBOARD VIEW -----
+    // ── 7. VIEW: DASHBOARD ──
     let sortableInstance = null;
 
     function initDashboardView() {
-      // Setup UI
       document.getElementById('dash-display-name').innerText = state.myProfile.display_name;
       document.getElementById('dash-slug').innerText = `@${state.myProfile.slug}`;
       document.getElementById('dash-avatar').innerText = getInitials(state.myProfile.display_name);
-      
       const badge = document.getElementById('dash-plan-badge');
       badge.innerText = state.myProfile.plan.toUpperCase();
       badge.className = `badge plan-${state.myProfile.plan}`;
 
-      // Render links
+      // Verified upsell (HOOK 4)
+      const upsell = document.getElementById('dash-verified-upsell');
+      if (state.myProfile.plan === 'free') {
+        upsell.classList.remove('hidden');
+        document.getElementById('dash-upsell-link').onclick = (e) => { e.preventDefault(); tg.openLink(`https://t.me/${BOT_USERNAME}?start=upgrade_pro`); };
+      } else { upsell.classList.add('hidden'); }
+
       renderDashboardLinks();
 
-      // Setup actions
-      document.getElementById('btn-share-profile').onclick = () => {
-        const url = `https://t.me/${isDev? 'TestBot' : 'tglinktreebot'}?startapp=${state.myProfile.slug}`;
-        tg.switchInlineQuery(url, ["users", "groups", "channels"]);
+      // Share button — show inline menu
+      const shareMenu = document.getElementById('share-menu');
+      document.getElementById('btn-share-profile').onclick = () => { shareMenu.classList.toggle('open'); };
+      const profileUrl = `https://t.me/${BOT_USERNAME}?startapp=${state.myProfile.slug}`;
+      document.getElementById('btn-copy-link').onclick = () => {
+        navigator.clipboard.writeText(profileUrl).then(() => {
+          const btn = document.getElementById('btn-copy-link');
+          btn.innerHTML = '✓ Copiado';
+          setTimeout(() => { btn.innerHTML = '📋 Copiar enlace'; }, 2000);
+        });
+      };
+      document.getElementById('btn-share-tg').onclick = () => {
+        tg.openLink(`https://t.me/share/url?url=${encodeURIComponent(profileUrl)}&text=${encodeURIComponent('Mira mis links en TelegramTree')}`);
       };
 
-      document.getElementById('btn-view-public').onclick = () => {
-        state.publicProfile = state.myProfile;
-        appRouter.navigate('public-profile');
-      };
+      document.getElementById('btn-view-public').onclick = () => { state.publicProfile = state.myProfile; appRouter.navigate('public-profile'); };
 
       document.getElementById('btn-add-link').onclick = () => {
-        const planMax = state.myProfile.plan === 'free' ? 5 : (state.myProfile.plan === 'pro'? 50 : 500);
-        if (state.myProfile.links.length >= planMax) {
-          tg.showAlert("Has alcanzado el límite de links de tu plan.");
-          return;
-        }
+        const planMax = state.myProfile.plan === 'free' ? 5 : (state.myProfile.plan === 'pro' ? 50 : 500);
+        if (state.myProfile.links.length >= planMax) { tg.showAlert("Has alcanzado el límite de links de tu plan."); return; }
         state.editingLink = null;
         appRouter.navigate('link-editor');
       };
 
-      // Ensure Main/Back buttons are handled
-      tg.MainButton.offClick();
-      tg.MainButton.hide();
-      tg.BackButton.hide();
-      
-      // Tab Bar listeners attached once globally at bottom
+      tg.MainButton.offClick(); tg.MainButton.hide(); tg.BackButton.hide();
     }
 
     function renderDashboardLinks() {
       const container = document.getElementById('links-list');
       const links = state.myProfile.links || [];
-      
-      const planMax = state.myProfile.plan === 'free' ? 5 : (state.myProfile.plan === 'pro'? 50 : 500);
+      const planMax = state.myProfile.plan === 'free' ? 5 : (state.myProfile.plan === 'pro' ? 50 : 500);
       document.getElementById('dash-link-count').innerText = links.length;
       document.getElementById('dash-link-max').innerText = planMax;
 
       if (links.length === 0) {
-        container.innerHTML = '<p class="text-center" style="padding:20px;">No tienes links todavía. ¡Añade uno!</p>';
+        container.innerHTML = `
+          <div class="tg-card text-center" style="padding: 32px 16px;">
+            <div style="font-size: 40px; margin-bottom: 12px;">🔗</div>
+            <h3 style="margin-bottom: 8px;">Tu perfil está vacío</h3>
+            <p style="margin-bottom: 16px;">Añade tu primer link y compártelo con el mundo.</p>
+            <button class="tg-btn tg-btn-primary" onclick="document.getElementById('btn-add-link').click()">+ Añadir mi primer link</button>
+          </div>`;
         return;
       }
 
       container.innerHTML = '';
       links.forEach(link => {
         const hasLock = link.is_locked || (link.locks && link.locks.length > 0);
-        
         const card = document.createElement('div');
         card.className = `link-card ${hasLock ? 'has-lock' : ''}`;
         card.dataset.id = link.id;
@@ -1029,101 +700,61 @@
             <div class="link-url">${link.url}</div>
           </div>
           <div class="link-actions">
-            <label class="toggle-switch-wrapper" style="margin-right:10px;">
-              <input type="checkbox" class="toggle-switch" data-id="${link.id}" ${link.is_active ? 'checked' : ''} onchange="window.toggleLinkStatus(${link.id}, this)">
-            </label>
+            <label style="margin-right:10px;"><input type="checkbox" class="toggle-switch" data-id="${link.id}" ${link.is_active ? 'checked' : ''} onchange="window.toggleLinkStatus(${link.id}, this)"></label>
             <button class="icon-btn edit-btn" onclick="window.editLinkFlow(${link.id})">✏️</button>
             <button class="icon-btn" style="color:var(--danger-color)" onclick="window.deleteLinkFlow(${link.id})">🗑</button>
-          </div>
-        `;
+          </div>`;
         container.appendChild(card);
       });
 
-      // Init Sortable
       if (sortableInstance) sortableInstance.destroy();
       sortableInstance = new Sortable(container, {
-        handle: '.drag-handle',
-        animation: 150,
-        ghostClass: 'sortable-ghost',
+        handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
         onEnd: async function () {
-          const itemElements = container.querySelectorAll('.link-card');
-          const newOrderIds = Array.from(itemElements).map(el => parseInt(el.dataset.id));
-          
+          const ids = Array.from(container.querySelectorAll('.link-card')).map(el => parseInt(el.dataset.id));
           try {
             tg.HapticFeedback.impactOccurred('light');
-            await api.reorderLinks(newOrderIds);
+            await api.reorderLinks(ids);
             invalidateCache();
-            // sync local state manually
-            const sortedMap = new Map();
-            state.myProfile.links.forEach(l => sortedMap.set(l.id, l));
-            state.myProfile.links = newOrderIds.map(id => sortedMap.get(id));
+            const m = new Map(state.myProfile.links.map(l => [l.id, l]));
+            state.myProfile.links = ids.map(id => m.get(id));
           } catch(e) {}
         }
       });
     }
 
-    // Global exposed functions for inline DOM handlers
-    window.toggleLinkStatus = async (id, checkbox) => {
+    window.toggleLinkStatus = async (id, cb) => {
       tg.HapticFeedback.impactOccurred('light');
-      const val = checkbox.checked;
-      try {
-        await api.editLink(id, { is_active: val });
-        const l = state.myProfile.links.find(x => x.id === id);
-        if(l) l.is_active = val;
-        invalidateCache();
-      } catch(e) {
-        checkbox.checked = !val; // revert
-      }
+      const val = cb.checked;
+      try { await api.editLink(id, { is_active: val }); const l = state.myProfile.links.find(x => x.id === id); if(l) l.is_active = val; invalidateCache(); }
+      catch(e) { cb.checked = !val; }
     };
-
-    window.editLinkFlow = (id) => {
-      const link = state.myProfile.links.find(x => x.id === id);
-      if (link) {
-        state.editingLink = link;
-        // In real backend, we need the lock configuration details. 
-        // Let's assume the GET /me returns them or we just config brand new locks.
-        appRouter.navigate('link-editor');
-      }
-    };
-
+    window.editLinkFlow = (id) => { const l = state.myProfile.links.find(x => x.id === id); if(l) { state.editingLink = l; appRouter.navigate('link-editor'); } };
     window.deleteLinkFlow = (id) => {
       tg.showConfirm("¿Seguro que quieres eliminar este link?", async (yes) => {
-        if(yes) {
-          try {
-            await api.deleteLink(id);
-            state.myProfile.links = state.myProfile.links.filter(x => x.id !== id);
-            invalidateCache();
-            renderDashboardLinks();
-            tg.HapticFeedback.notificationOccurred('success');
-          } catch(e) {}
-        }
+        if(yes) { try { await api.deleteLink(id); state.myProfile.links = state.myProfile.links.filter(x => x.id !== id); invalidateCache(); renderDashboardLinks(); tg.HapticFeedback.notificationOccurred('success'); } catch(e) {} }
       });
     };
 
-    // ----- LINK EDITOR VIEW -----
+    // ── 8. VIEW: LINK EDITOR ──
     const EMOJIS = ['🔗','📱','💻','📺','🎮','🛍️','🛒','📷','🎵','📚','💸','💳','📝','🎉','🔥','❤️','✨','⭐'];
-    
+
     function initLinkEditorView() {
-      // Header & BackButton
       tg.BackButton.show();
       tg.BackButton.onClick(() => appRouter.navigate('dashboard'));
-      
       const isEdit = !!state.editingLink;
       document.getElementById('link-editor-title').innerText = isEdit ? "Editar Link" : "Añadir Link";
 
-      // Inputs
       const typeBtns = document.querySelectorAll('#link-type-control .segmented-btn');
       const iTitle = document.getElementById('le-title');
       const iUrl = document.getElementById('le-url');
       const iDesc = document.getElementById('le-desc');
       const iIconCust = document.getElementById('le-icon-custom');
       const iActive = document.getElementById('le-active');
-      
-      // Emoji Grid
+
       const grid = document.getElementById('le-emoji-grid');
       grid.innerHTML = '';
       let selectedIcon = isEdit ? (state.editingLink.icon || '🔗') : '🔗';
-      
       const renderEmojis = () => {
         grid.innerHTML = '';
         EMOJIS.forEach(e => {
@@ -1135,94 +766,57 @@
         });
       };
       renderEmojis();
+      iIconCust.oninput = () => { if (iIconCust.value) { selectedIcon = Array.from(iIconCust.value)[0] || ''; renderEmojis(); } };
 
-      iIconCust.oninput = () => {
-        if (iIconCust.value) { selectedIcon = window.Array.from(iIconCust.value)[0] || ''; renderEmojis(); }
-      };
-
-      // Type toggles
       let selectedType = isEdit ? state.editingLink.link_type : 'url';
       typeBtns.forEach(b => {
         b.classList.toggle('active', b.dataset.type === selectedType);
-        b.onclick = () => {
-          typeBtns.forEach(x => x.classList.remove('active'));
-          b.classList.add('active');
-          selectedType = b.dataset.type;
-        };
+        b.onclick = () => { typeBtns.forEach(x => x.classList.remove('active')); b.classList.add('active'); selectedType = b.dataset.type; };
       });
 
-      // Populate values
-      if (isEdit) {
-        iTitle.value = state.editingLink.title;
-        iUrl.value = state.editingLink.url;
-        iDesc.value = state.editingLink.description || '';
-        iActive.checked = state.editingLink.is_active;
-        if (!EMOJIS.includes(selectedIcon)) iIconCust.value = selectedIcon;
-      } else {
-        iTitle.value = ''; iUrl.value = ''; iDesc.value = ''; iActive.checked = true; iIconCust.value = '';
-      }
+      if (isEdit) { iTitle.value = state.editingLink.title; iUrl.value = state.editingLink.url; iDesc.value = state.editingLink.description || ''; iActive.checked = state.editingLink.is_active; if (!EMOJIS.includes(selectedIcon)) iIconCust.value = selectedIcon; }
+      else { iTitle.value = ''; iUrl.value = ''; iDesc.value = ''; iActive.checked = true; iIconCust.value = ''; }
 
-      // --- LOCK SECTION ---
-      let hasLock = isEdit && state.editingLink.is_locked; // Simplified. 
-      // If the API returns lock details inside the link object, we'd use that.
-      // Since schema doesn't attach lock config to link response directly (only is_locked bool), 
-      // editing an existing lock requires fetching it or deleting/recreating.
-      // For this spec, we'll allow deleting and creating a new lock inline.
-      
-      let lockConfig = null; // keeps track of inline lock creation state
-      
-      const lkSectionNo = document.getElementById('le-no-lock');
-      const lkSectionYes = document.getElementById('le-has-lock');
+      // Lock section
+      let hasLock = isEdit && state.editingLink.is_locked;
+      let lockConfig = null;
+      const lkNo = document.getElementById('le-no-lock');
+      const lkYes = document.getElementById('le-has-lock');
       const lkTypeBtns = document.querySelectorAll('#lock-type-control .segmented-btn');
-      const cfgChannel = document.getElementById('lock-config-channel');
-      const cfgPayment = document.getElementById('lock-config-payment');
-      
-      // Upgrade lock types based on plan
-      document.getElementById('lock-type-payment').style.display = (state.myProfile.plan !== 'free') ? 'block' : 'none';
+      const cfgCh = document.getElementById('lock-config-channel');
+      const cfgPay = document.getElementById('lock-config-payment');
+      const payUpsell = document.getElementById('le-payment-upsell');
 
-      const updateLockUI = (activeLockId) => {
-        if (hasLock || activeLockId) {
-          lkSectionNo.classList.add('hidden');
-          lkSectionYes.classList.remove('hidden');
-        } else {
-          lkSectionNo.classList.remove('hidden');
-          lkSectionYes.classList.add('hidden');
-          lockConfig = null; // reset
-        }
+      // HOOK 3 — Payment lock: always show button, upsell for free
+      const payBtn = document.getElementById('lock-type-payment');
+      payBtn.style.display = 'block'; // always visible
+
+      const updateLockUI = () => {
+        if (hasLock || lockConfig) { lkNo.classList.add('hidden'); lkYes.classList.remove('hidden'); }
+        else { lkNo.classList.remove('hidden'); lkYes.classList.add('hidden'); lockConfig = null; }
       };
       updateLockUI();
 
       let selLockType = 'channel_join';
       lkTypeBtns.forEach(b => {
         b.onclick = () => {
+          if (b.dataset.type === 'payment' && state.myProfile.plan === 'free') {
+            payUpsell.classList.remove('hidden');
+            document.getElementById('le-payment-upsell-link').onclick = (e) => { e.preventDefault(); tg.openLink(`https://t.me/${BOT_USERNAME}?start=upgrade_pro`); };
+            return; // Don't select
+          }
+          payUpsell.classList.add('hidden');
           lkTypeBtns.forEach(x => x.classList.remove('active'));
           b.classList.add('active');
           selLockType = b.dataset.type;
-          cfgChannel.classList.toggle('hidden', selLockType !== 'channel_join');
-          cfgPayment.classList.toggle('hidden', selLockType !== 'payment');
-        }
+          cfgCh.classList.toggle('hidden', selLockType !== 'channel_join');
+          cfgPay.classList.toggle('hidden', selLockType !== 'payment');
+        };
       });
 
-      document.getElementById('btn-add-lock').onclick = () => {
-        hasLock = true;
-        lockConfig = { pending: true }; // Flag to save during link save
-        updateLockUI();
-      };
-      
-      document.getElementById('btn-remove-lock').onclick = async () => {
-        if (isEdit && state.editingLink.is_locked) {
-           // We need to delete from server. 
-           // NOTE: Since API returns locks under /api/locks, we might need a reference. 
-           // If UI doesn't know LockID, we'd have to fetch. For sake of spec, let's assume 
-           // when `is_locked` is false, backend cleans up, or we just warn user.
-           tg.showAlert("Para eliminar un candado guardado, edítalo desde Ajustes (Simulado en este layout).");
-           return;
-        }
-        hasLock = false; lockConfig = null;
-        updateLockUI();
-      };
+      document.getElementById('btn-add-lock').onclick = () => { hasLock = true; lockConfig = { pending: true }; updateLockUI(); };
+      document.getElementById('btn-remove-lock').onclick = () => { hasLock = false; lockConfig = null; updateLockUI(); };
 
-      // MAIN BUTTON SUBMIT
       tg.MainButton.setText(isEdit ? "Guardar cambios" : "Añadir link");
       tg.MainButton.show();
       tg.MainButton.offClick();
@@ -1231,65 +825,43 @@
         let url = iUrl.value.trim();
         if(!tit || !url) { tg.showAlert("Título y URL son requeridos."); return; }
         if(!url.startsWith('http')) url = 'https://' + url;
-
-        const body = {
-          title: tit,
-          url: url,
-          description: iDesc.value.trim(),
-          icon: selectedIcon,
-          link_type: selectedType,
-          is_active: iActive.checked
-        };
-
+        const body = { title: tit, url, description: iDesc.value.trim(), icon: selectedIcon, link_type: selectedType, is_active: iActive.checked };
         try {
           tg.MainButton.showProgress();
           let linkResult;
           if (isEdit) {
             linkResult = await api.editLink(state.editingLink.id, body);
-            // Replace in state
             const idx = state.myProfile.links.findIndex(x => x.id === linkResult.id);
             if(idx > -1) state.myProfile.links[idx] = linkResult;
           } else {
             linkResult = await api.addLink(body);
             state.myProfile.links.push(linkResult);
           }
-
-          // Handle pending lock
           if (lockConfig && lockConfig.pending) {
             let ldata = {};
-            if (selLockType === 'channel_join') {
-              ldata = {
-                channel_id: document.getElementById('lc-channel-id').value.trim(),
-                channel_name: document.getElementById('lc-channel-name').value.trim()
-              };
-            }
-            if(ldata.channel_id) {
-              await api.createLock({
-                link_id: linkResult.id,
-                lock_type: selLockType,
-                config: ldata
-              });
-              linkResult.is_locked = true;
-            }
+            if (selLockType === 'channel_join') { ldata = { channel_id: document.getElementById('lc-channel-id').value.trim(), channel_name: document.getElementById('lc-channel-name').value.trim() }; }
+            if(ldata.channel_id) { await api.createLock({ link_id: linkResult.id, lock_type: selLockType, config: ldata }); linkResult.is_locked = true; }
           }
-
           invalidateCache();
           tg.MainButton.hideProgress();
           tg.HapticFeedback.notificationOccurred('success');
+
+          // HOOK 1 — 5th link nudge
+          if (!isEdit && state.myProfile.plan === 'free' && state.myProfile.links.length >= 5) {
+            setTimeout(() => { tg.showAlert("🎉 Perfil completo al 100%\n\nCon Pro puedes añadir hasta 50 links, ver analytics de 90 días y usar temas premium.\n\nDesde $4.99/mes."); }, 1500);
+          }
+
           appRouter.navigate('dashboard');
-        } catch(e) {
-          tg.MainButton.hideProgress();
-        }
+        } catch(e) { tg.MainButton.hideProgress(); }
       });
     }
 
-    // ----- PUBLIC PROFILE VIEW -----
+    // ── 9. VIEW: PUBLIC PROFILE ──
     function initPublicProfileView() {
       const p = state.publicProfile;
       tg.BackButton.show();
-      // If we came from dashboard (owner previewing), go back to dash. Else, we close the mini app
       tg.BackButton.onClick(() => {
-        if(state.myProfile && state.myProfile.id === p.id) appRouter.navigate('dashboard');
+        if(state.myProfile && state.myProfile.slug === p.slug) appRouter.navigate('dashboard');
         else tg.close();
       });
 
@@ -1305,140 +877,117 @@
       } else {
         p.links.forEach(link => {
           if(!link.is_active) return;
-          
           const a = document.createElement('a');
           a.className = 'public-link-btn';
-          a.href = "#"; // Handled via JS
-          
-          const hasLock = link.is_locked;
-          const isUnlockedLocally = state.unlockedLocks.has(link.id);
+          a.href = "#";
 
-          if (hasLock && !isUnlockedLocally) {
-            // Locked UI
-            a.innerHTML = `
-              <span class="public-link-icon">🔒</span> ${link.title}
-              <div style="font-size:12px; font-weight:normal; margin-top:4px; opacity:0.8;">Requiere Desbloqueo</div>
-            `;
-            a.onclick = (e) => { e.preventDefault(); handleUnlockFlow(link.id, a); };
+          const hasLock = link.is_locked;
+          const isUnlocked = state.unlockedLocks.has(link.lock_id);
+
+          if (hasLock && !isUnlocked) {
+            a.dataset.lockId = link.lock_id;
+            a.dataset.linkId = link.id;
+            a.innerHTML = `<span class="public-link-icon">🔒</span> ${link.title}<div style="font-size:12px; font-weight:normal; margin-top:4px; opacity:0.8;">Requiere Desbloqueo</div>`;
+            a.onclick = (e) => { e.preventDefault(); handleUnlockFlow(a); };
           } else {
-            // Unlocked UI / Normal URL
-            a.innerHTML = `
-              <span class="public-link-icon">${link.icon||'🔗'}</span> ${link.title}
-              ${link.description ? `<div style="font-size:12px; font-weight:normal; margin-top:4px; opacity:0.8;">${link.description}</div>`:''}
-            `;
-            a.onclick = (e) => {
-              e.preventDefault();
-              api.trackEvent('link_click', p.id, link.id);
-              if (link.url) tg.openLink(link.url);
-            };
+            a.innerHTML = `<span class="public-link-icon">${link.icon||'🔗'}</span> ${link.title}${link.description ? `<div style="font-size:12px; font-weight:normal; margin-top:4px; opacity:0.8;">${link.description}</div>` : ''}`;
+            a.onclick = (e) => { e.preventDefault(); api.trackEvent('link_click', p.id, link.id); if (link.url) tg.openLink(link.url); };
           }
           container.appendChild(a);
         });
       }
 
-      // Track View
       api.trackEvent('profile_view', p.id);
 
-      // Show FAB if owner
+      // Branding footer (FIX 5)
+      const brandLink = document.getElementById('pub-branding-link');
+      brandLink.innerText = "⚡ Crea tu TelegramTree gratis";
+      brandLink.onclick = (e) => {
+        e.preventDefault();
+        api.trackEvent('branding_click', p.id);
+        tg.openLink(`https://t.me/${BOT_USERNAME}?start=from_profile_${p.slug}`);
+      };
+
+      // FAB edit for owner
       const fab = document.getElementById('pub-fab-edit');
-      // If currentUser.id is defined and equals owner id (which we don't return directly in schema, 
-      // but we know if state.myProfile matches slug)
-      if (state.myProfile && p.slug === state.myProfile.slug) {
-        fab.classList.remove('hidden');
-      } else {
-        fab.classList.add('hidden');
-      }
+      if (state.myProfile && p.slug === state.myProfile.slug) fab.classList.remove('hidden');
+      else fab.classList.add('hidden');
 
       tg.MainButton.hide();
     }
 
-    async function handleUnlockFlow(linkId, buttonEl) {
+    async function handleUnlockFlow(buttonEl) {
+      const lockId = buttonEl.dataset.lockId;
+      const linkId = buttonEl.dataset.linkId;
+      if (!lockId) { tg.showAlert("Este enlace no tiene bloqueo configurado."); return; }
+
       tg.HapticFeedback.impactOccurred('medium');
       buttonEl.style.opacity = 0.5;
       buttonEl.innerHTML = `<span class="public-link-icon">⏳</span> Verificando...`;
-      
-      // Need Lock ID. The public schema returns is_locked per link. 
-      // Wait, endpoint verifyLock requires lockId. If the endpoint is /api/locks/{lockId}/verify...
-      // Since public profile doesn't expose lockId directly in our schema modification earlier, 
-      // assuming a custom endpoint or we pass the linkId directly. 
-      // *Correction*: Let's assume the API handles lock verification *by link id* or we adapt.
-      // Based on spec, it's /api/locks/{lock_id}/verify.
-      // If we don't have lock_id, we can't call it. Let's spoof it as calling by linkId for the UI logic
-      // because backend lock table is tied to link_id.
-      // In a real scenario, schema would pass lock_id. For now, assume lock_id = link_id for MVP demo.
-      let mockedLockId = linkId; // Mock mapping
 
       try {
-        const res = await api.verifyLock(mockedLockId);
-        
+        const res = await api.verifyLock(lockId);
         if (res.unlocked) {
-          state.unlockedLocks.add(linkId);
+          state.unlockedLocks.add(parseInt(lockId));
           tg.HapticFeedback.notificationOccurred('success');
-          tg.showAlert("✅ Acceso desbloqueado");
-          if(res.url) tg.openLink(res.url);
-          
-          // Re-render
-          initPublicProfileView();
+          // Update button inline without re-render
+          buttonEl.style.opacity = 1;
+          buttonEl.innerHTML = `<span class="public-link-icon">✅</span> Desbloqueado`;
+          buttonEl.onclick = (e) => { e.preventDefault(); if(res.url) tg.openLink(res.url); };
+          if(res.url) setTimeout(() => tg.openLink(res.url), 500);
         } else {
-          // Requires action
           tg.HapticFeedback.notificationOccurred('warning');
-          
-          // Custom confirm dialog logic
-          if (res.action_url) {
-             tg.showConfirm(`${res.message||'Debes hacer una acción'}\n\n¿Quieres realizar la acción ahora?`, (ok) => {
-               if(ok) tg.openLink(res.action_url);
-               initPublicProfileView(); // Reset button
-             });
-          } else {
-             tg.showAlert(res.message || "Bloqueado.");
-             initPublicProfileView(); // Reset button
-          }
+          buttonEl.style.opacity = 1;
+          // Inline two-step UI
+          buttonEl.innerHTML = `
+            <div style="font-size:14px; font-weight:normal; margin-bottom:8px;">Únete al canal para ver este contenido</div>
+            <div style="display:flex; gap:8px; justify-content:center;">
+              <button class="tg-btn tg-btn-primary" style="width:auto; padding:8px 12px; font-size:13px;" id="unlock-go-${lockId}">Ir al canal →</button>
+              <button class="tg-btn tg-btn-ghost" style="width:auto; padding:8px 12px; font-size:13px;" id="unlock-retry-${lockId}">Ya me uní ✓</button>
+            </div>`;
+          buttonEl.onclick = null;
+          document.getElementById(`unlock-go-${lockId}`).onclick = (e) => { e.stopPropagation(); if(res.action_url) tg.openLink(res.action_url); };
+          document.getElementById(`unlock-retry-${lockId}`).onclick = (e) => { e.stopPropagation(); handleUnlockFlow(buttonEl); };
         }
       } catch(e) {
-        initPublicProfileView(); // Reset button
-        // 401 handled by api module
+        buttonEl.style.opacity = 1;
+        buttonEl.innerHTML = `<span class="public-link-icon">🔒</span> Error — toca para reintentar`;
+        buttonEl.onclick = (ev) => { ev.preventDefault(); handleUnlockFlow(buttonEl); };
       }
     }
 
-
-    // ----- ANALYTICS VIEW -----
+    // ── 10. VIEW: ANALYTICS ──
     function initAnalyticsView() {
-      document.getElementById('dash-display-name'); // safety check
       const selPeriod = document.getElementById('an-period');
       const table = document.getElementById('an-top-table').querySelector('tbody');
-      
+
+      // HOOK 2 — upgrade overlay button
+      document.getElementById('an-upgrade-btn').onclick = () => { tg.openLink(`https://t.me/${BOT_USERNAME}?start=upgrade_pro`); };
+
       const loadStats = async () => {
         const period = selPeriod.value;
-        const planMax = state.myProfile.plan === 'free' ? 7 : (state.myProfile.plan === 'pro'? 90 : 365);
-        const reqDays = parseInt(period);
-        
+        const periodDaysMap = { '7d': 7, '30d': 30, '90d': 90 };
+        const reqDays = periodDaysMap[period];
+        const planMaxDays = { free: 7, pro: 90, business: 365 };
+        const planMax = planMaxDays[state.myProfile.plan] || 7;
         const overlay = document.getElementById('an-upgrade-overlay');
-        if (reqDays > planMax) {
-           overlay.classList.remove('hidden');
-           return;
-        } else {
-           overlay.classList.add('hidden');
-        }
+        if (reqDays > planMax) { overlay.classList.remove('hidden'); return; }
+        else { overlay.classList.add('hidden'); }
 
         try {
           const data = await api.getAnalytics(period);
-          document.getElementById('an-views').innerText = data.total_views;
-          document.getElementById('an-clicks').innerText = data.total_clicks;
-          
+          document.getElementById('an-views').innerText = data.total_views || 0;
+          document.getElementById('an-clicks').innerText = data.total_clicks || 0;
           const ctr = data.total_views > 0 ? ((data.total_clicks / data.total_views)*100).toFixed(1) : 0;
           document.getElementById('an-ctr').innerText = ctr + '%';
-          
-          document.getElementById('an-unlocks').innerText = data.unlock_successes;
+          document.getElementById('an-unlocks').innerText = data.unlock_successes || 0;
 
-          // Chart drawing (Vanilla SVG)
-          drawChart(data.total_views, data.total_clicks); // Simplified data
+          drawChart(data.chart);
 
-          // Table
           table.innerHTML = '';
           if(!data.top_links || data.top_links.length === 0) {
             table.innerHTML = '<tr><td colspan="2" class="text-center" style="color:var(--hint-color);">Sin datos</td></tr>';
           } else {
-            // Match link IDs to titles
             const linkMap = new Map(state.myProfile.links.map(l => [l.id, l.title]));
             data.top_links.forEach(row => {
               const tr = document.createElement('tr');
@@ -1452,49 +1001,239 @@
 
       selPeriod.onchange = loadStats;
       loadStats();
-
-      tg.MainButton.hide();
-      tg.BackButton.hide();
+      tg.MainButton.hide(); tg.BackButton.hide();
     }
 
-    function drawChart(v, c) {
+    function drawChart(chartData) {
       const svg = document.getElementById('an-chart');
       svg.innerHTML = '';
-      // Dummy visual representation
-      const vH = Math.min(90, Math.max(10, v % 100));
-      const cH = Math.min(80, Math.max(5, c % 100));
 
-      const bar1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      bar1.setAttribute('x', '20'); bar1.setAttribute('y', 100 - vH); bar1.setAttribute('width', '20'); bar1.setAttribute('height', vH);
-      bar1.setAttribute('fill', 'var(--btn-color)');
-      bar1.setAttribute('rx', '4');
+      if (!chartData || chartData.length === 0) {
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', '150'); t.setAttribute('y', '60'); t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('fill', 'var(--hint-color)'); t.setAttribute('font-size', '14');
+        t.textContent = 'Sin datos aún';
+        svg.appendChild(t);
+        return;
+      }
 
-      const bar2 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      bar2.setAttribute('x', '60'); bar2.setAttribute('y', 100 - cH); bar2.setAttribute('width', '20'); bar2.setAttribute('height', cH);
-      bar2.setAttribute('fill', 'var(--success-color)');
-      bar2.setAttribute('rx', '4');
+      const maxVal = Math.max(1, ...chartData.map(d => Math.max(d.views || 0, d.clicks || 0)));
+      const n = chartData.length;
+      const groupW = 300 / n;
+      const barW = Math.max(4, (groupW / 2) - 4);
+      const chartH = 100;
 
-      svg.appendChild(bar1); svg.appendChild(bar2);
+      chartData.forEach((d, i) => {
+        const vH = ((d.views || 0) / maxVal) * chartH;
+        const cH = ((d.clicks || 0) / maxVal) * chartH;
+        const x = i * groupW;
+
+        const bv = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bv.setAttribute('x', x + 2); bv.setAttribute('y', chartH - vH); bv.setAttribute('width', barW); bv.setAttribute('height', vH);
+        bv.setAttribute('fill', 'var(--btn-color)'); bv.setAttribute('rx', '2');
+        svg.appendChild(bv);
+
+        const bc = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bc.setAttribute('x', x + barW + 4); bc.setAttribute('y', chartH - cH); bc.setAttribute('width', barW); bc.setAttribute('height', cH);
+        bc.setAttribute('fill', 'var(--success-color)'); bc.setAttribute('rx', '2');
+        svg.appendChild(bc);
+
+        if (n >= 4 && i % 3 === 0) {
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('x', x + groupW/2); label.setAttribute('y', chartH + 12);
+          label.setAttribute('text-anchor', 'middle'); label.setAttribute('font-size', '9');
+          label.setAttribute('fill', 'var(--hint-color)');
+          label.textContent = d.date ? d.date.slice(5) : '';
+          svg.appendChild(label);
+        }
+      });
     }
 
+    // ── 11. VIEW: SETTINGS ──
+    const THEMES = [
+      { id: 'default', name: 'Por defecto', color: 'var(--btn-color)', free: true },
+      { id: 'dark', name: 'Oscuro', color: '#1a1a1a', free: false },
+      { id: 'neon', name: 'Neón', color: '#00ff88', free: false },
+      { id: 'minimal', name: 'Minimal', color: '#f8f8f8', free: false },
+      { id: 'gradient', name: 'Gradiente', color: 'linear-gradient(135deg, #667eea, #764ba2)', free: false },
+    ];
 
-    // --- 7. GLOBAL TAB BAR LISTENERS ---
+    function initSettingsView() {
+      document.getElementById('set-name').value = state.myProfile.display_name;
+      document.getElementById('set-bio').value = state.myProfile.bio || '';
+
+      // Save profile
+      document.getElementById('btn-save-profile').onclick = async () => {
+        const name = document.getElementById('set-name').value.trim();
+        const bio = document.getElementById('set-bio').value.trim();
+        if (!name) { tg.showAlert("El nombre es obligatorio."); return; }
+        try {
+          const updated = await api.updateProfile({ display_name: name, bio });
+          Object.assign(state.myProfile, updated);
+          invalidateCache();
+          tg.showAlert("✓ Guardado");
+        } catch(e) {}
+      };
+
+      // Theme Grid
+      const themeGrid = document.getElementById('theme-grid');
+      themeGrid.innerHTML = '';
+      const isFree = state.myProfile.plan === 'free';
+      THEMES.forEach(t => {
+        const card = document.createElement('div');
+        card.className = `theme-card ${state.myProfile.theme === t.id ? 'selected' : ''}`;
+        const isLocked = isFree && !t.free;
+        card.innerHTML = `
+          <div class="theme-swatch" style="background: ${t.color};"></div>
+          <div class="theme-name">${t.name}</div>
+          ${isLocked ? '<div class="theme-lock-overlay"><span class="badge plan-pro">PRO</span></div>' : ''}`;
+        card.onclick = async () => {
+          if (isLocked) { tg.showAlert("Actualiza a Pro para usar este tema."); return; }
+          try {
+            await api.updateProfile({ theme: t.id });
+            state.myProfile.theme = t.id;
+            invalidateCache();
+            initSettingsView(); // re-render
+          } catch(e) {}
+        };
+        themeGrid.appendChild(card);
+      });
+
+      // Plan info
+      const planInfo = document.getElementById('set-plan-info');
+      if (state.myProfile.plan === 'free') {
+        planInfo.innerHTML = `
+          <div class="flex-between"><span class="badge plan-free">FREE</span></div>
+          <button class="tg-btn tg-btn-primary mt-4" id="btn-upgrade">✨ Actualizar a Pro — $4.99/mes</button>`;
+        setTimeout(() => {
+          document.getElementById('btn-upgrade').onclick = () => { tg.openLink(`https://t.me/${BOT_USERNAME}?start=upgrade_pro`); };
+        }, 0);
+      } else {
+        planInfo.innerHTML = `<div class="flex-between"><span class="badge plan-${state.myProfile.plan}">${state.myProfile.plan.toUpperCase()}</span><span style="color:var(--success-color);">✓ Plan activo</span></div>`;
+      }
+
+      // Danger zone accordion
+      document.getElementById('danger-toggle').onclick = () => {
+        document.getElementById('danger-content').classList.toggle('open');
+      };
+      document.getElementById('btn-delete-account').onclick = () => {
+        tg.showConfirm("¿Seguro? Esto es irreversible.", async (yes) => {
+          if (yes) {
+            try {
+              await api.deleteProfile();
+              state.myProfile = null;
+              invalidateCache();
+              appRouter.navigate('onboarding');
+            } catch(e) {}
+          }
+        });
+      };
+
+      tg.MainButton.hide(); tg.BackButton.hide();
+    }
+
+    // ── 12. VIEW: EXPLORE ──
+    let exploreOffset = 0;
+    let exploreLoading = false;
+    let exploreHasMore = true;
+    let exploreSearch = '';
+    let exploreObserver = null;
+
+    function initExploreView() {
+      tg.BackButton.show();
+      tg.BackButton.onClick(() => {
+        if (state.myProfile) appRouter.navigate('dashboard');
+        else tg.close();
+      });
+      tg.MainButton.hide();
+
+      exploreOffset = 0;
+      exploreHasMore = true;
+      exploreSearch = '';
+      document.getElementById('explore-list').innerHTML = '';
+      document.getElementById('explore-search').value = '';
+
+      let searchTimer;
+      document.getElementById('explore-search').oninput = (e) => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          exploreSearch = e.target.value.trim();
+          exploreOffset = 0;
+          exploreHasMore = true;
+          document.getElementById('explore-list').innerHTML = '';
+          loadExploreProfiles();
+        }, 500);
+      };
+
+      // Infinite scroll via IntersectionObserver
+      if (exploreObserver) exploreObserver.disconnect();
+      exploreObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && exploreHasMore && !exploreLoading) loadExploreProfiles();
+      }, { threshold: 0.1 });
+      exploreObserver.observe(document.getElementById('explore-sentinel'));
+
+      loadExploreProfiles();
+    }
+
+    async function loadExploreProfiles() {
+      if (exploreLoading || !exploreHasMore) return;
+      exploreLoading = true;
+      document.getElementById('explore-loading').classList.remove('hidden');
+
+      try {
+        const res = await api.explore(20, exploreOffset, exploreSearch);
+        const container = document.getElementById('explore-list');
+
+        if (res.profiles.length === 0 && exploreOffset === 0) {
+          container.innerHTML = '<div class="tg-card text-center" style="padding:24px;"><p>No se encontraron perfiles.</p></div>';
+        }
+
+        res.profiles.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'explore-card';
+          card.innerHTML = `
+            <div class="explore-avatar">${getInitials(p.display_name)}</div>
+            <div class="explore-info">
+              <div class="explore-name">${p.display_name}</div>
+              <div class="explore-slug">@${p.slug}</div>
+              ${p.bio ? `<div class="explore-bio">${p.bio}</div>` : ''}
+              <div class="explore-meta">${p.link_count} links · ${p.total_views} vistas</div>
+            </div>`;
+          card.onclick = async () => {
+            try {
+              state.publicProfile = await api.getPublicProfile(p.slug);
+              appRouter.navigate('public-profile');
+            } catch(e) {}
+          };
+          container.appendChild(card);
+        });
+
+        exploreOffset += res.profiles.length;
+        exploreHasMore = res.has_more;
+      } catch(e) {
+        // If endpoint doesn't exist yet, show fallback
+        if (exploreOffset === 0) {
+          document.getElementById('explore-list').innerHTML = '<div class="tg-card text-center" style="padding:24px;"><div style="font-size:32px; margin-bottom:8px;">🌱</div><p>Sé el primero en ser descubierto</p></div>';
+          exploreHasMore = false;
+        }
+      } finally {
+        exploreLoading = false;
+        document.getElementById('explore-loading').classList.add('hidden');
+      }
+    }
+
+    // ── 13. TAB BAR LISTENERS ──
     document.querySelectorAll('.tab-item').forEach(item => {
       item.addEventListener('click', (e) => {
-        const tgt = e.currentTarget;
-        const view = tgt.dataset.tab;
-        
-        // Update active visual
+        const view = e.currentTarget.dataset.tab;
         document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-        tgt.classList.add('active');
-
+        e.currentTarget.classList.add('active');
         appRouter.navigate(view);
       });
     });
 
     // START
     boot();
-
   </script>
 </body>
 </html>

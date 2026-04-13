@@ -2,14 +2,21 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from tglinktree.api.deps import get_db, rate_limit_auth, rate_limit_public
 from tglinktree.api.auth import get_current_user
+from tglinktree.models.link import ProfileLink
 from tglinktree.models.lock import ContentLock
 from tglinktree.models.user import User
 from tglinktree.schemas.profile import (
+    ExploreProfileItem,
+    ExploreResponse,
     ProfileCreate,
     ProfilePublicResponse,
     ProfileResponse,
@@ -57,25 +64,31 @@ async def get_public_profile(
     for link in profile.links:
         if not link.is_active:
             continue
-        # Check if link has an active lock
-        has_lock = any(
-            lock.is_active for lock in link.locks
-        ) if link.locks else False
+
+        # Determine lock info from eagerly-loaded locks
+        active_lock = None
+        if link.locks:
+            for lock in link.locks:
+                if lock.is_active:
+                    active_lock = lock
+                    break
 
         links.append(LinkInProfile(
             id=link.id,
             title=link.title,
-            url=link.url if not has_lock else "",
+            url=link.url if not active_lock else "",
             description=link.description,
             icon=link.icon,
             position=link.position,
             is_active=link.is_active,
             link_type=link.link_type,
             style=link.style or {},
-            is_locked=has_lock,
+            is_locked=active_lock is not None,
+            lock_id=active_lock.id if active_lock else None,
+            lock_type=active_lock.lock_type if active_lock else None,
         ))
 
-    # Fire-and-forget view tracking (no await needed for response)
+    # Fire-and-forget view tracking
     await track_event(
         db=db,
         profile_id=profile.id,
@@ -102,3 +115,87 @@ async def update_my_profile(
     """Update the authenticated user's profile."""
     profile = await profile_service.update_profile(db, user, data)
     return profile
+
+
+@router.delete("/me", status_code=204)
+async def delete_my_profile(
+    user: User = Depends(rate_limit_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete the authenticated user's profile."""
+    profile = await profile_service.get_profile_by_user(db, user)
+    await db.delete(profile)
+    await db.flush()
+
+
+# ── Explore endpoint ──────────────────────────────────────────
+
+from tglinktree.models.profile import Profile
+
+
+@router.get("", response_model=None)
+async def explore_profiles(
+    limit: int = Query(default=20, le=50, ge=1),
+    offset: int = Query(default=0, ge=0),
+    search: Optional[str] = Query(default=None, max_length=64),
+    db: AsyncSession = Depends(get_db),
+    _rate: None = Depends(rate_limit_public),
+):
+    """Public explore endpoint — discover profiles."""
+    # Subquery: count active links per profile
+    link_count_sq = (
+        select(
+            ProfileLink.profile_id,
+            func.count(ProfileLink.id).label("link_count"),
+        )
+        .where(ProfileLink.is_active == True)
+        .group_by(ProfileLink.profile_id)
+        .subquery()
+    )
+
+    base_q = (
+        select(Profile, link_count_sq.c.link_count)
+        .outerjoin(link_count_sq, Profile.id == link_count_sq.c.profile_id)
+        .where(Profile.is_public == True)
+        .where(link_count_sq.c.link_count > 0)  # Exclude empty profiles
+    )
+
+    if search:
+        search_term = f"%{search.lower()}%"
+        base_q = base_q.where(
+            (func.lower(Profile.display_name).like(search_term))
+            | (func.lower(Profile.slug).like(search_term))
+        )
+
+    # Count total
+    count_q = select(func.count()).select_from(base_q.subquery())
+    total_result = await db.execute(count_q)
+    total = total_result.scalar() or 0
+
+    # Fetch page, ordered by trending (views desc)
+    results = await db.execute(
+        base_q
+        .order_by(Profile.total_views.desc(), Profile.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+
+    profiles = []
+    for row in results.all():
+        profile = row[0]
+        lc = row[1] or 0
+        profiles.append(ExploreProfileItem(
+            slug=profile.slug,
+            display_name=profile.display_name,
+            bio=profile.bio,
+            avatar_url=profile.avatar_url,
+            plan=profile.plan,
+            link_count=lc,
+            total_views=profile.total_views,
+        ))
+
+    return ExploreResponse(
+        profiles=profiles,
+        total=total,
+        has_more=(offset + limit) < total,
+    )
