@@ -136,6 +136,11 @@ def create_app() -> FastAPI:
     async def health():
         return {"status": "ok", "version": "1.0.0"}
 
+    # Mount static files (frontend)
+    import os
+    public_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public")
+    app.mount("/", StaticFiles(directory=public_dir, html=True), name="public")
+
     return app
 
 
