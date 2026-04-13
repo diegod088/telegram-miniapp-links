@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centro de Enlaces - Explorador</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Fuentes Modernas -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0f1115;
+      --card-bg: #1c1f26;
+      --primary: #5c6fff;
+      --primary-hover: #7384ff;
+      --text: #e1e1e1;
+      --text-muted: #8b92a5;
+      --border: #2a2e39;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Animaciones */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Layout */
+    .container {
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      background: linear-gradient(90deg, #fff, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* Búsqueda y Filtros */
+    .search-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    input, select {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.3s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(92, 111, 255, 0.2);
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .filter-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* Enlaces */
+    .links-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .link-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      animation: fadeIn 0.4s ease forwards;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .link-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .link-category {
+      background: rgba(92, 111, 255, 0.1);
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .link-date {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .link-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .link-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .link-url {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 14px;
+      word-break: break-all;
+      transition: color 0.2s ease;
+      background: rgba(92, 111, 255, 0.05);
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .link-url:hover {
+      background: rgba(92, 111, 255, 0.15);
+    }
+
+    .link-actions {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      margin-top: 4px;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .action-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .action-btn.report:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Centro de Enlaces</h1>
+      <p class="subtitle">Explora y descubre contenido nuevo</p>
+    </header>
+
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Buscar en títulos, links...">
+      <div class="filter-row">
+        <select id="timeFilter">
+          <option value="">Cualquier fecha</option>
+          <option value="24h">Últimas 24h</option>
+          <option value="3d">Últimos 3 días</option>
+          <option value="7d">Últimos 7 días</option>
+          <option value="1m">Último mes</option>
+        </select>
+        <select id="sortFilter">
+          <option value="recent">Más recientes</option>
+          <option value="popular">Más populares</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filters" id="categoryFilters">
+      <button class="filter-btn active" data-cat="Todas">Todas</button>
+      <button class="filter-btn" data-cat="Adulto">Adulto</button>
+      <button class="filter-btn" data-cat="Anime">Anime</button>
+      <button class="filter-btn" data-cat="Películas">Películas</button>
+      <button class="filter-btn" data-cat="Series">Series</button>
+      <button class="filter-btn" data-cat="Estrenos Nuevos">Estrenos Nuevos</button>
+      <button class="filter-btn" data-cat="Documentales">Documentales</button>
+    </div>
+
+    <div class="links-grid" id="linksContainer">
+      <!-- Los enlaces se cargaran aqui via JS -->
+      <p style="text-align:center; color: var(--text-muted); padding: 40px 0;">Cargando enlaces...</p>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.ready();
+
+    const userId = tg.initDataUnsafe?.user?.id || 0; // fallback para web testing
+
+    let currentCategory = 'Todas';
+    
+    const searchInput = document.getElementById('searchInput');
+    const timeFilter = document.getElementById('timeFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    const filters = document.querySelectorAll('.filter-btn');
+    const container = document.getElementById('linksContainer');
+
+    // Manejo de Categorias
+    filters.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        filters.forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentCategory = e.target.dataset.cat;
+        loadLinks();
+      });
+    });
+
+    // Manejo de Inputs
+    let searchTimeout;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(loadLinks, 500);
+    });
+
+    timeFilter.addEventListener('change', loadLinks);
+    sortFilter.addEventListener('change', loadLinks);
+
+    async function loadLinks() {
+      const search = searchInput.value;
+      const timeframe = timeFilter.value;
+      const sort = sortFilter.value;
+
+      container.innerHTML = '<p style="text-align:center; color: var(--text-muted); padding: 40px 0;">Actualizando resultados...</p>';
+
+      try {
+        const query = new URLSearchParams();
+        if (currentCategory && currentCategory !== 'Todas') query.append('category', currentCategory);
+        if (search) query.append('search', search);
+        if (timeframe) query.append('timeframe', timeframe);
+        if (sort) query.append('sort', sort);
+
+        const response = await fetch(`/api/links?${query.toString()}`);
+        const data = await response.json();
+
+        container.innerHTML = '';
+        
+        if (data.length === 0) {
+          container.innerHTML = '<p style="text-align:center; color: var(--text-muted); padding: 40px 0;">No se encontraron enlaces con esos filtros.</p>';
+          return;
+        }
+
+        data.forEach(link => {
+          const formattedDate = new Date(link.fecha_hora_publicacion).toLocaleDateString([], {
+            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'
+          });
+          
+          const card = document.createElement('div');
+          card.className = 'link-card';
+          card.innerHTML = `
+            <div class="link-header">
+              <span class="link-category">${link.nombre_categoria}</span>
+              <span class="link-date">${formattedDate}</span>
+            </div>
+            ${link.titulo ? `<h3 class="link-title">${link.titulo}</h3>` : ''}
+            ${link.descripcion ? `<p class="link-desc">${link.descripcion}</p>` : ''}
+            <a href="${link.url}" target="_blank" class="link-url">${link.url}</a>
+            <div class="link-actions">
+              <div class="action-group">
+                <button class="action-btn" onclick="rateLink(${link.pub_id}, 'like')">👍 ${link.likes}</button>
+                <button class="action-btn" onclick="rateLink(${link.pub_id}, 'dislike')">👎 ${link.dislikes}</button>
+              </div>
+              <button class="action-btn report" onclick="rateLink(${link.pub_id}, 'report_inap')">⚠️ Reportar</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+      } catch (err) {
+        container.innerHTML = '<p style="text-align:center; color: var(--danger); padding: 40px 0;">Error cargando enlaces del servidor.</p>';
+      }
+    }
+
+    async function rateLink(pubId, type) {
+      if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+      
+      try {
+        const res = await fetch('/api/rate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pubId, type, telegramUserId: userId })
+        });
+        
+        const json = await res.json();
+        if (json.error) {
+           tg.showAlert(json.error);
+        } else {
+           loadLinks(); // Recargar para mostrar los nuevos likes
+        }
+      } catch (err) {
+        tg.showAlert('Error de conexión.');
+      }
+    }
+
+    // Carga inicial
+    loadLinks();
+  </script>
+</body>
+</html>
