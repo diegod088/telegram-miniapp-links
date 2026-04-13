@@ -54,6 +54,7 @@ class ProfileUpdate(BaseModel):
     avatar_url: Optional[str] = None
     theme: Optional[str] = None
     is_public: Optional[bool] = None
+    category: Optional[str] = None
 
     @field_validator("display_name")
     @classmethod
@@ -94,6 +95,7 @@ class ProfileResponse(BaseModel):
     is_public: bool
     plan: str
     total_views: int
+    category: Optional[str] = None
     created_at: datetime
     links: list[LinkInProfile] = []
 
@@ -108,6 +110,7 @@ class ProfilePublicResponse(BaseModel):
     avatar_url: Optional[str] = None
     theme: str
     total_views: int
+    category: Optional[str] = None
     links: list[LinkInProfile] = []
 
     model_config = {"from_attributes": True}

@@ -104,6 +104,11 @@ async def update_profile(
         setattr(profile, field, value)
 
     await db.flush()
+
+    # Update search index since name/bio/category might have changed
+    from tglinktree.services import discovery_service
+    await discovery_service.update_search_vector(db, profile.id)
+
     return profile
 
 

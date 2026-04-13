@@ -34,12 +34,31 @@ async def track_event(
     country_code: Optional[str] = None,
 ) -> None:
     """
-    Record a click/view event. Fire-and-forget style.
-    IP is always hashed with SHA-256 before persisting.
+    Record a click/view event. Includes anti-spam deduplication via Redis.
     """
     ip_hash = None
     if client_ip:
         ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()
+
+    # ── Anti-Spam / Deduplication ────────────────────────────
+    from tglinktree.core.redis import get_redis
+    
+    # Identify the visitor by TG ID or Hash of IP
+    visitor_id = str(visitor_tg_id) if visitor_tg_id else (ip_hash or "unknown")
+    dedup_key = f"dedup:{profile_id}:{event_type}:{visitor_id}"
+    if link_id:
+        dedup_key += f":{link_id}"
+
+    try:
+        r = get_redis()
+        # SET with NX (not exists) and EX (expire in 1 hour)
+        is_new = await r.set(dedup_key, "1", ex=3600, nx=True)
+        if not is_new:
+            return  # Skip DB write for duplicate events within the hour
+    except Exception as e:
+        # Don't break tracking if Redis is down, but log it
+        import logging
+        logging.getLogger("tglinktree").warning(f"Redis dedup failed: {e}")
 
     event = ClickEvent(
         profile_id=profile_id,

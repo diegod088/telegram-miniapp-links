@@ -21,6 +21,7 @@ from tglinktree.models import *  # noqa: F401, F403
 from tglinktree.api.routers.profiles import router as profiles_router
 from tglinktree.api.routers.links import router as links_router
 from tglinktree.api.routers.locks import router as locks_router
+from tglinktree.api.routers.discovery import router as discovery_router
 from tglinktree.api.routers.analytics import router as analytics_router
 from tglinktree.api.routers.payments import router as payments_router
 
@@ -128,6 +129,7 @@ def create_app() -> FastAPI:
     app.include_router(profiles_router, prefix="/api")
     app.include_router(links_router, prefix="/api")
     app.include_router(locks_router, prefix="/api")
+    app.include_router(discovery_router, prefix="/api")
     app.include_router(analytics_router, prefix="/api")
     app.include_router(payments_router, prefix="/api")
 

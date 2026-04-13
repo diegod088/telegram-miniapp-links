@@ -13,6 +13,7 @@ from tglinktree.models.profile import Profile
 from tglinktree.models.user import User
 from tglinktree.schemas.link import LinkCreate, LinkReorder, LinkResponse, LinkUpdate
 from tglinktree.services.profile_service import check_link_limit, get_profile_by_user
+from tglinktree.services import discovery_service
 
 router = APIRouter(prefix="/profiles/me/links", tags=["links"])
 
@@ -49,6 +50,8 @@ async def add_link(
     )
     db.add(link)
     await db.flush()
+    # Update search index in background (fire and forget for now in async loop)
+    await discovery_service.update_search_vector(db, profile.id)
     return link
 
 
@@ -62,11 +65,9 @@ async def edit_link(
     """Edit a link owned by the user."""
     link = await _get_own_link(db, user, link_id)
 
-    update_data = data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(link, field, value)
-
     await db.flush()
+    # Update search index
+    await discovery_service.update_search_vector(db, link.profile_id)
     return link
 
 
@@ -78,8 +79,10 @@ async def delete_link(
 ):
     """Delete a link owned by the user."""
     link = await _get_own_link(db, user, link_id)
+    profile_id = link.profile_id
     await db.delete(link)
-    await db.flush()
+    await db.commit() # Commit needed before refresh to see deleted state if using Joins
+    await discovery_service.update_search_vector(db, profile_id)
 
 
 @router.post("/reorder", status_code=200)

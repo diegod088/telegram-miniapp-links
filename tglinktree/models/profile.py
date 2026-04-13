@@ -33,6 +33,20 @@ class Profile(Base):
     is_public: Mapped[bool] = mapped_column(Boolean, default=True)
     plan: Mapped[str] = mapped_column(String(16), default="free")
     total_views: Mapped[int] = mapped_column(BigInteger, default=0)
+    category: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    
+    # Monetization
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False)
+    boost_until: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=True
+    )
+    
+    # Search & Discovery
+    trending_score: Mapped[float] = mapped_column(default=0.0)
+    # TSVector for full-text search
+    from sqlalchemy.dialects.postgresql import TSVECTOR
+    search_vector: Mapped[TSVECTOR] = mapped_column(TSVECTOR, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         default=datetime.utcnow, onupdate=datetime.utcnow
@@ -60,6 +74,9 @@ class Profile(Base):
         ),
         Index("ix_profiles_slug", "slug"),
         Index("ix_profiles_user_id", "user_id"),
+        Index("ix_profiles_category", "category"),
+        Index("ix_profiles_trending_score", "trending_score"),
+        Index("ix_profiles_search_vector", "search_vector", postgresql_using="gin"),
     )
 
     def __repr__(self) -> str:
