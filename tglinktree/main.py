@@ -150,7 +150,7 @@ def create_app() -> FastAPI:
         with open(index_path, "r", encoding="utf-8") as f:
             html = f.read()
         html = html.replace("BOT_USERNAME_PLACEHOLDER", settings.BOT_USERNAME or "TelegramTreeBot")
-        return HTMLResponse(html)
+        return HTMLResponse(content=html, media_type="text/html; charset=utf-8")
 
     # Mount static files for any other assets (favicon, etc.)
     app.mount("/", StaticFiles(directory=public_dir, html=False), name="public")
