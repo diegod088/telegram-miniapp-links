@@ -54,6 +54,7 @@ async def create_profile(
         avatar_url=data.avatar_url,
         theme=data.theme,
         is_public=data.is_public,
+        links=[]
     )
     db.add(profile)
     await db.flush()
