@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, Index, String, Text
+from sqlalchemy import Integer, BigInteger, Integer, Boolean, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tglinktree.core.database import Base
@@ -13,7 +13,7 @@ from tglinktree.core.database import Base
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     telegram_id: Mapped[int] = mapped_column(
         BigInteger, unique=True, nullable=False, index=True
     )

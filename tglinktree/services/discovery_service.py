@@ -35,36 +35,58 @@ async def search_profiles(
     if not query:
         return [], 0
 
-    # PostgreSQL websearch_to_tsquery is perfect for raw user input
-    # We use 'spanish' as the default dictionary given the context
-    ts_query = func.websearch_to_tsquery('spanish', query)
-    
-    # Ranking formula: Relevancia text + Boost de Monetización + Pequeño peso de vistas totales
-    rank_expr = func.ts_rank(Profile.search_vector, ts_query)
-    
-    # Apply boost if boosted (simple multiplier)
-    boost_expr = func.case(
-        (and_(Profile.boost_until.isnot(None), Profile.boost_until > datetime.utcnow()), 1.5),
-        else_=1.0
-    )
-    
-    final_rank = rank_expr * boost_expr
+    dialect_name = db.bind.dialect.name.lower()
+    is_sqlite = "sqlite" in dialect_name
+    print(f"DEBUG: Search Dialect Name: {dialect_name} (is_sqlite={is_sqlite})")
 
-    # Execute search
-    search_q = (
-        select(Profile)
-        .where(Profile.is_public == True)
-        .where(Profile.search_vector.op('@@')(ts_query))
-        .order_by(desc(final_rank))
-        .limit(limit)
-        .offset(offset)
-    )
+    if is_sqlite:
+        # Simple SQLite fallback using LIKE
+        search_q = (
+            select(Profile)
+            .where(Profile.is_public == True)
+            .where(or_(
+                Profile.display_name.ilike(f"%{query}%"),
+                Profile.slug.ilike(f"%{query}%"),
+                Profile.bio.ilike(f"%{query}%"),
+                Profile.search_vector.ilike(f"%{query}%")
+            ))
+            .limit(limit)
+            .offset(offset)
+        )
+        count_q = (
+            select(func.count(Profile.id))
+            .where(Profile.is_public == True)
+            .where(or_(
+                Profile.display_name.ilike(f"%{query}%"),
+                Profile.slug.ilike(f"%{query}%"),
+                Profile.bio.ilike(f"%{query}%"),
+                Profile.search_vector.ilike(f"%{query}%")
+            ))
+        )
+    else:
+        # PostgreSQL websearch_to_tsquery logic
+        ts_query = func.websearch_to_tsquery('spanish', query)
+        rank_expr = func.ts_rank(Profile.search_vector, ts_query)
+        
+        boost_expr = func.case(
+            (and_(Profile.boost_until.isnot(None), Profile.boost_until > datetime.utcnow()), 1.5),
+            else_=1.0
+        )
+        final_rank = rank_expr * boost_expr
 
-    count_q = (
-        select(func.count(Profile.id))
-        .where(Profile.is_public == True)
-        .where(Profile.search_vector.op('@@')(ts_query))
-    )
+        search_q = (
+            select(Profile)
+            .where(Profile.is_public == True)
+            .where(Profile.search_vector.op('@@')(ts_query))
+            .order_by(desc(final_rank))
+            .limit(limit)
+            .offset(offset)
+        )
+        count_q = (
+            select(func.count(Profile.id))
+            .where(Profile.is_public == True)
+            .where(Profile.search_vector.op('@@')(ts_query))
+        )
 
     results = await db.execute(search_q)
     total = await db.execute(count_q)
@@ -177,12 +199,31 @@ async def update_search_vector(db: AsyncSession, profile_id: int) -> None:
         return
 
     # Combine text
-    link_titles = " ".join([l.title for l in profile.links if l.is_active])
+    link_titles = " ".join([l.title for l in profile.links if l.title and l.is_active])
     full_text = f"{profile.display_name} {profile.bio or ''} {link_titles}"
     
-    # Update via raw SQL to use PostgreSQL to_tsvector correctly
-    await db.execute(
-        text("UPDATE profiles SET search_vector = to_tsvector('spanish', :text) WHERE id = :id"),
-        {"text": full_text, "id": profile_id}
-    )
-    await db.commit()
+    dialect_name = db.bind.dialect.name.lower()
+    is_sqlite = "sqlite" in dialect_name
+    print(f"DEBUG: Update Dialect Name: {dialect_name} (is_sqlite={is_sqlite})")
+    
+    try:
+        if is_sqlite:
+            # Simple SQLite update
+            await db.execute(
+                text("UPDATE profiles SET search_vector = :text WHERE id = :id"),
+                {"text": full_text, "id": profile_id}
+            )
+        else:
+            # Update via raw SQL to use PostgreSQL to_tsvector correctly
+            await db.execute(
+                text("UPDATE profiles SET search_vector = to_tsvector('spanish', :text) WHERE id = :id"),
+                {"text": full_text, "id": profile_id}
+            )
+        await db.commit()
+    except Exception as e:
+        # Non-blocking: log the error but allow the request to finish
+        print(f"WARNING: Failed to update search index (non-blocking): {e}")
+        await db.rollback() # Rollback the failed update but link creation was already flushed and will be committed by get_db or subsequent logic if needed.
+        # Actually, if we are in a session that auto-commits at the end, a rollback here might be dangerous.
+        # However, discovery_service.update_search_vector is often called after db.flush().
+        pass

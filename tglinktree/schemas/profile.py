@@ -24,6 +24,7 @@ class ProfileCreate(BaseModel):
     avatar_url: Optional[str] = None
     theme: str = "default"
     is_public: bool = True
+    category: Optional[str] = "Otros"
 
     @field_validator("slug")
     @classmethod
@@ -125,6 +126,7 @@ class ExploreProfileItem(BaseModel):
     plan: str
     link_count: int
     total_views: int
+    category: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

@@ -20,24 +20,15 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # 1. Add columns as nullable first
+    # 1. Add columns with NOT NULL and defaults directly
     op.add_column('profiles', sa.Column('category', sa.String(length=64), nullable=True))
-    op.add_column('profiles', sa.Column('is_featured', sa.Boolean(), nullable=True))
-    op.add_column('profiles', sa.Column('boost_until', sa.TIMESTAMP(timezone=True), nullable=True))
-    op.add_column('profiles', sa.Column('trending_score', sa.Float(), nullable=True))
-    op.add_column('profiles', sa.Column('search_vector', postgresql.TSVECTOR(), nullable=True))
-    
-    # 2. Populate defaults for existing rows
-    op.execute("UPDATE profiles SET is_featured = FALSE WHERE is_featured IS NULL")
-    op.execute("UPDATE profiles SET trending_score = 0.0 WHERE trending_score IS NULL")
-    
-    # 3. Alter columns to be NOT NULL
-    op.alter_column('profiles', 'is_featured', nullable=False)
-    op.alter_column('profiles', 'trending_score', nullable=False)
+    op.add_column('profiles', sa.Column('is_featured', sa.Boolean(), server_default=sa.text('0'), nullable=False))
+    op.add_column('profiles', sa.Column('boost_until', sa.DateTime(), nullable=True))
+    op.add_column('profiles', sa.Column('trending_score', sa.Float(), server_default='0.0', nullable=False))
+    op.add_column('profiles', sa.Column('search_vector', sa.Text(), nullable=True))
 
     # 4. Create indices
     op.create_index('ix_profiles_category', 'profiles', ['category'], unique=False)
-    op.create_index('ix_profiles_search_vector', 'profiles', ['search_vector'], unique=False, postgresql_using='gin')
     op.create_index('ix_profiles_trending_score', 'profiles', ['trending_score'], unique=False)
 
 

@@ -13,7 +13,7 @@ from tglinktree.models.profile import Profile
 from tglinktree.models.user import User
 from tglinktree.schemas.link import LinkCreate, LinkReorder, LinkResponse, LinkUpdate
 from tglinktree.services.profile_service import check_link_limit, get_profile_by_user
-from tglinktree.services import discovery_service
+from tglinktree.services import discovery_service, social_service
 
 router = APIRouter(prefix="/profiles/me/links", tags=["links"])
 
@@ -28,7 +28,16 @@ async def add_link(
     profile = await get_profile_by_user(db, user)
     await check_link_limit(db, profile)
 
-    # Determine next position
+    # 1. Scrub URL
+    canonical_url = await social_service.scrub_url(data.url)
+    
+    # 2. Scrape title if missing
+    title = data.title
+    if not title:
+        scraped_title = await social_service.scrape_page_title(canonical_url)
+        title = scraped_title or canonical_url # Fallback to URL as title
+
+    # 3. Determine next position
     result = await db.execute(
         select(ProfileLink)
         .where(ProfileLink.profile_id == profile.id)
@@ -40,8 +49,10 @@ async def add_link(
 
     link = ProfileLink(
         profile_id=profile.id,
-        title=data.title,
+        title=title,
         url=data.url,
+        canonical_url=canonical_url,
+        category=data.category,
         description=data.description,
         icon=data.icon,
         link_type=data.link_type,
@@ -50,7 +61,7 @@ async def add_link(
     )
     db.add(link)
     await db.flush()
-    # Update search index in background (fire and forget for now in async loop)
+    # Update search index in background
     await discovery_service.update_search_vector(db, profile.id)
     return link
 

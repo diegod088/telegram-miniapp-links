@@ -31,12 +31,18 @@ class Settings(BaseSettings):
     # ── Feature Flags ─────────────────────────────────────────
     PAYMENTS_ENABLED: bool = False
 
+    # ── Affiliate Tags ────────────────────────────────────────
+    AFFILIATE_TAG_AMAZON: str = ""
+    AFFILIATE_TAG_ALIEXPRESS: str = ""
+    AFFILIATE_TAG_TEMU: str = ""
+    AFFILIATE_TAG_SHEIN: str = ""
+
     @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, v: str) -> str:
-        if not v.startswith("postgresql+asyncpg://"):
+        if not (v.startswith("postgresql+asyncpg://") or v.startswith("sqlite+aiosqlite://")):
             raise ValueError(
-                "DATABASE_URL must use the 'postgresql+asyncpg://' scheme"
+                "DATABASE_URL must use 'postgresql+asyncpg://' or 'sqlite+aiosqlite://'"
             )
         return v
 
@@ -44,6 +50,7 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
+        "extra": "ignore",
     }
 
 

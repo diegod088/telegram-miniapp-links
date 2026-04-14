@@ -94,6 +94,10 @@ async def get_public_profile(
         profile_id=profile.id,
         event_type="profile_view",
     )
+    
+    # Also increment the cached/aggregated counter in the profile table
+    profile.total_views += 1
+    await db.flush()
 
     return ProfilePublicResponse(
         slug=profile.slug,

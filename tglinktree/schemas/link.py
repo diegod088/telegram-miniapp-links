@@ -9,8 +9,9 @@ from pydantic import BaseModel, field_validator
 
 class LinkCreate(BaseModel):
     """Request body for adding a link."""
-    title: str
     url: str
+    title: Optional[str] = None
+    category: str = "OTHER"
     description: Optional[str] = None
     icon: Optional[str] = None
     link_type: str = "url"
@@ -18,10 +19,11 @@ class LinkCreate(BaseModel):
 
     @field_validator("title")
     @classmethod
-    def validate_title(cls, v: str) -> str:
-        v = v.strip()
-        if not v or len(v) > 256:
-            raise ValueError("Title must be 1-256 characters.")
+    def validate_title(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.strip()
+            if not v or len(v) > 256:
+                raise ValueError("Title must be 1-256 characters.")
         return v
 
     @field_validator("url")
@@ -38,6 +40,15 @@ class LinkCreate(BaseModel):
         allowed = {"url", "telegram_channel", "telegram_bot", "payment"}
         if v not in allowed:
             raise ValueError(f"link_type must be one of: {', '.join(allowed)}")
+        return v
+
+    @field_validator("category")
+    @classmethod
+    def validate_category(cls, v: str) -> str:
+        allowed = {"COURSE", "AI_TOOL", "DEAL", "CRYPTO", "OTHER"}
+        v = v.upper()
+        if v not in allowed:
+            return "OTHER"
         return v
 
 
@@ -66,10 +77,16 @@ class LinkResponse(BaseModel):
     id: int
     title: str
     url: str
+    canonical_url: Optional[str] = None
+    category: str
     description: Optional[str] = None
     icon: Optional[str] = None
     position: int
     is_active: bool
+    is_verified: bool
+    is_sponsored: bool
+    upvotes: int
+    views: int
     link_type: str
     style: dict = {}
 

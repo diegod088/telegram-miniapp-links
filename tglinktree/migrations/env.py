@@ -14,6 +14,9 @@ from tglinktree.models import *  # noqa: F401, F403
 
 # this is the Alembic Config object
 config = context.config
+from tglinktree.config import get_settings
+_settings = get_settings()
+config.set_main_option("sqlalchemy.url", _settings.DATABASE_URL)
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:

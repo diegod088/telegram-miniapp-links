@@ -2,18 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Optional, Any
 from datetime import datetime
 
-from sqlalchemy import (
-    BigInteger,
-    Boolean,
-    CheckConstraint,
-    ForeignKey,
-    Index,
-    String,
-    Text,
-    TIMESTAMP,
-)
+from sqlalchemy import Integer, BigInteger, \
+    Boolean, CheckConstraint, ForeignKey, Index, String, Text, TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tglinktree.core.database import Base
@@ -22,7 +15,7 @@ from tglinktree.core.database import Base
 class Profile(Base):
     __tablename__ = "profiles"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
@@ -44,9 +37,9 @@ class Profile(Base):
     
     # Search & Discovery
     trending_score: Mapped[float] = mapped_column(default=0.0)
-    # TSVector for full-text search
-    from sqlalchemy.dialects.postgresql import TSVECTOR
-    search_vector: Mapped[TSVECTOR] = mapped_column(TSVECTOR, nullable=True)
+    
+    # TSVector for full-text search (Postgres only)
+    search_vector: Mapped[Optional[Any]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
@@ -69,15 +62,10 @@ class Profile(Base):
     )
 
     __table_args__ = (
-        CheckConstraint(
-            r"slug ~ '^[a-z0-9_\-]{3,64}$'",
-            name="ck_profiles_slug_format",
-        ),
         Index("ix_profiles_slug", "slug"),
         Index("ix_profiles_user_id", "user_id"),
         Index("ix_profiles_category", "category"),
         Index("ix_profiles_trending_score", "trending_score"),
-        Index("ix_profiles_search_vector", "search_vector", postgresql_using="gin"),
     )
 
     def __repr__(self) -> str:

@@ -56,19 +56,23 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(
-            "🚀 Abrir Mi Linktree",
-            web_app=WebAppInfo(url=full_url),
+            "🔥 Explorar Links Populares",
+            web_app=WebAppInfo(url=f"{webapp_url}#/explore"),
+        )],
+        [InlineKeyboardButton(
+            "🚀 Mi Perfil Linktree",
+            web_app=WebAppInfo(url=webapp_url),
         )],
     ])
 
     welcome_text = (
-        "👋 **¡Bienvenido a TGLinktree!**\n\n"
-        "Crea tu página de enlaces personalizada y compártela "
-        "con tu comunidad.\n\n"
-        "🔗 Agrega tus enlaces\n"
-        "🔒 Bloquea contenido premium\n"
-        "📊 Analiza tu impacto\n\n"
-        "Pulsa el botón para comenzar 👇"
+        "👋 **¡Bienvenido a TGLinktree Social!**\n\n"
+        "La primera plataforma social para descubrir y compartir "
+        "los mejores canales, bots y herramientas de Telegram.\n\n"
+        "🔥 **Explora** lo que es tendencia\n"
+        "📈 **Vota** por tus links favoritos\n"
+        "🔗 **Crea** tu propio perfil social\n\n"
+        "Empieza a explorar o gestiona tu perfil 👇"
     )
 
     await update.message.reply_text(

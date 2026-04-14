@@ -41,9 +41,28 @@ async def create_profile(
 
     # Check slug uniqueness (also enforced by DB, but better error msg)
     slug_check = await db.execute(
-        select(Profile).where(Profile.slug == data.slug)
+        select(Profile)
+        .where(Profile.slug == data.slug)
+        .options(selectinload(Profile.user))
     )
-    if slug_check.scalar_one_or_none():
+    existing_by_slug = slug_check.scalar_one_or_none()
+    
+    if existing_by_slug:
+        # SELF-HEALING: If the slug belongs to the same Telegram ID, re-link it
+        if existing_by_slug.user and existing_by_slug.user.telegram_id == user.telegram_id:
+            print(f"Self-healing: Re-linking profile '{data.slug}' to user ID {user.id} (matching Telegram ID {user.telegram_id})")
+            existing_by_slug.user_id = user.id
+            await db.flush()
+            
+            # Eagerly load links and locks for the return response
+            # We need to re-query or refresh because selectinload on an existing object can be tricky
+            result = await db.execute(
+                select(Profile)
+                .where(Profile.id == existing_by_slug.id)
+                .options(selectinload(Profile.links).selectinload(ProfileLink.locks))
+            )
+            return result.scalar_one()
+            
         raise ForbiddenError(f"The slug '{data.slug}' is already taken.")
 
     profile = Profile(
@@ -63,6 +82,7 @@ async def create_profile(
 
 async def get_profile_by_user(db: AsyncSession, user: User) -> Profile:
     """Get the profile owned by the given user."""
+    print(f"DEBUG: Searching profile for user_id={user.id} (tg={user.telegram_id})")
     result = await db.execute(
         select(Profile)
         .where(Profile.user_id == user.id)
@@ -70,7 +90,10 @@ async def get_profile_by_user(db: AsyncSession, user: User) -> Profile:
     )
     profile = result.scalar_one_or_none()
     if profile is None:
+        print(f"DEBUG: No profile found for user_id={user.id}")
         raise NotFoundError("You don't have a profile yet. Create one first.")
+    
+    print(f"DEBUG: Found profile id={profile.id} for user_id={user.id}")
     return profile
 
 

@@ -2,14 +2,5 @@
 source venv/bin/activate
 export PYTHONPATH=.
 
-python app.py &
-flask_pid=$!
-
-python bot1.py &
-bot1_pid=$!
-
-python bot2.py &
-bot2_pid=$!
-
-trap "kill $flask_pid $bot1_pid $bot2_pid" SIGINT SIGTERM
-wait
+echo "Iniciando El nuevo servidor TGLinktree FastAPI..."
+uvicorn tglinktree.main:app --host 0.0.0.0 --port 8000

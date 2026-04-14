@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, ForeignKey, Index, String, Text
+from sqlalchemy import Integer, BigInteger, Integer, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tglinktree.core.database import Base
@@ -13,7 +13,7 @@ from tglinktree.core.database import Base
 class ClickEvent(Base):
     __tablename__ = "click_events"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     profile_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False
     )

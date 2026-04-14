@@ -6,7 +6,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -24,6 +24,7 @@ from tglinktree.api.routers.locks import router as locks_router
 from tglinktree.api.routers.discovery import router as discovery_router
 from tglinktree.api.routers.analytics import router as analytics_router
 from tglinktree.api.routers.payments import router as payments_router
+from tglinktree.api.routers.explore import router as explore_router
 
 logger = logging.getLogger("tglinktree")
 
@@ -132,6 +133,7 @@ def create_app() -> FastAPI:
     app.include_router(discovery_router, prefix="/api")
     app.include_router(analytics_router, prefix="/api")
     app.include_router(payments_router, prefix="/api")
+    app.include_router(explore_router, prefix="/api")
 
     # Health check
     @app.get("/health")
@@ -142,18 +144,38 @@ def create_app() -> FastAPI:
     import os
     from fastapi.responses import HTMLResponse
 
+    # ── Static Files & SPA ────────────────────────────────
     public_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public")
     index_path = os.path.join(public_dir, "index.html")
 
+    # 1. Mount static files at root first (matches files like /assets/...)
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import HTMLResponse, FileResponse, Response
+    app.mount("/assets", StaticFiles(directory=os.path.join(public_dir, "assets")), name="assets")
+    @app.get("/vite.svg", response_class=FileResponse)
+    async def serve_favicon():
+        return os.path.join(public_dir, "vite.svg")
+
     @app.get("/", response_class=HTMLResponse)
     async def serve_index():
+        if not os.path.exists(index_path):
+             return HTMLResponse("Frontend not built.", status_code=404)
         with open(index_path, "r", encoding="utf-8") as f:
             html = f.read()
-        html = html.replace("BOT_USERNAME_PLACEHOLDER", settings.BOT_USERNAME or "TelegramTreeBot")
-        return HTMLResponse(content=html, media_type="text/html; charset=utf-8")
+        return HTMLResponse(content=html)
 
-    # Mount static files for any other assets (favicon, etc.)
-    app.mount("/", StaticFiles(directory=public_dir, html=False), name="public")
+    # SPA fallback: Serve index.html for any other route NOT starting with /api
+    @app.get("/{full_path:path}", response_class=HTMLResponse)
+    async def spa_fallback(request: Request, full_path: str):
+        if full_path.startswith("api"):
+            return Response(status_code=404)
+        
+        if not os.path.exists(index_path):
+             return HTMLResponse("Frontend not found.", status_code=404)
+             
+        with open(index_path, "r", encoding="utf-8") as f:
+            html = f.read()
+        return HTMLResponse(content=html)
 
     return app
 

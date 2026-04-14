@@ -5,15 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import (
-    BigInteger,
-    Boolean,
-    CheckConstraint,
-    ForeignKey,
-    Index,
-    String,
-    UniqueConstraint,
-)
+from sqlalchemy import Integer, BigInteger, Boolean, CheckConstraint, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,7 +15,7 @@ from tglinktree.core.database import Base
 class ContentLock(Base):
     __tablename__ = "content_locks"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     link_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("profile_links.id", ondelete="CASCADE"),
@@ -65,7 +57,7 @@ class ContentLock(Base):
 class UserUnlock(Base):
     __tablename__ = "user_unlocks"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     lock_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("content_locks.id", ondelete="CASCADE"), nullable=False
     )
