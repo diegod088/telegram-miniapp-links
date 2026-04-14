@@ -105,10 +105,12 @@ async def toggle_upvote(db: AsyncSession, user_id: int, link_id: int) -> Tuple[i
 def get_explore_score_expr():
     """
     Returns the SQL expression for ranking links.
-    Score = (upvotes * 1.5) / POWER(EXTRACT(EPOCH FROM (NOW() - created_at)) / 3600 + 2, 1.5)
+    Score = (upvotes * 1.5 * boost) / POWER(T / 3600 + 2, 1.5)
     """
-    # PostgreSQL specific formula
-    return (ProfileLink.upvotes * 1.5) / func.pow(
+    from tglinktree.models.profile import Profile
+    
+    # PostgreSQL specific formula + Boost
+    return (ProfileLink.upvotes * 1.5 * Profile.boost_score) / func.pow(
         (func.extract('epoch', func.now() - ProfileLink.created_at) / 3600) + 2,
         1.5
     )

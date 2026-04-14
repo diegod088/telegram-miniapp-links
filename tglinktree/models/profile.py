@@ -37,6 +37,7 @@ class Profile(Base):
     
     # Search & Discovery
     trending_score: Mapped[float] = mapped_column(default=0.0)
+    boost_score: Mapped[float] = mapped_column(default=1.0)
     
     # TSVector for full-text search (Postgres only)
     search_vector: Mapped[Optional[Any]] = mapped_column(Text, nullable=True)

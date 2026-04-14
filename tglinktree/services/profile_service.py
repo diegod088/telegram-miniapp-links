@@ -24,6 +24,14 @@ def _max_links_for_plan(plan: str) -> int:
     }.get(plan, settings.MAX_LINKS_FREE)
 
 
+def _boost_score_for_plan(plan: str) -> float:
+    return {
+        "free": 1.0,
+        "pro": 1.2,
+        "business": 1.5,
+    }.get(plan.lower(), 1.0)
+
+
 # ── CRUD ──────────────────────────────────────────────────────
 
 async def create_profile(
@@ -73,6 +81,8 @@ async def create_profile(
         avatar_url=data.avatar_url,
         theme=data.theme,
         is_public=data.is_public,
+        plan=data.plan if hasattr(data, 'plan') else "free",
+        boost_score=_boost_score_for_plan(data.plan if hasattr(data, 'plan') else "free"),
         links=[]
     )
     db.add(profile)
@@ -125,6 +135,8 @@ async def update_profile(
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(profile, field, value)
+        if field == "plan":
+            profile.boost_score = _boost_score_for_plan(value)
 
     await db.flush()
 

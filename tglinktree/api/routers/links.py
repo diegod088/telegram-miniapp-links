@@ -12,7 +12,8 @@ from tglinktree.models.link import ProfileLink
 from tglinktree.models.profile import Profile
 from tglinktree.models.user import User
 from tglinktree.schemas.link import LinkCreate, LinkReorder, LinkResponse, LinkUpdate
-from tglinktree.services.profile_service import check_link_limit, get_profile_by_user
+from tglinktree.middleware.plan_limits import check_link_limit
+from tglinktree.services.profile_service import get_profile_by_user
 from tglinktree.services import discovery_service, social_service
 
 router = APIRouter(prefix="/profiles/me/links", tags=["links"])
@@ -23,10 +24,10 @@ async def add_link(
     data: LinkCreate,
     user: User = Depends(rate_limit_auth),
     db: AsyncSession = Depends(get_db),
+    _limit: None = Depends(check_link_limit),
 ):
     """Add a link to the user's profile."""
     profile = await get_profile_by_user(db, user)
-    await check_link_limit(db, profile)
 
     # 1. Scrub URL
     canonical_url = await social_service.scrub_url(data.url)
