@@ -56,4 +56,16 @@ export const deleteLink = async (linkId: number) => {
   return response.data;
 };
 
+// --- Payments ---
+
+export const createInvoice = async (planId: string) => {
+  const response = await api.post(`/payments/create-invoice?plan_id=${planId}`);
+  return response.data;
+};
+
+export const fetchMyPlan = async () => {
+  const response = await api.get('/profiles/me/plan');
+  return response.data;
+};
+
 export default api;

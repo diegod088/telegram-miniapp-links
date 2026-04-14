@@ -110,6 +110,33 @@ async def get_public_profile(
     )
 
 
+@router.get("/me/plan")
+async def get_my_plan(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get active plan and subscription info for the user."""
+    from tglinktree.models.payment import Subscription
+    
+    profile = await profile_service.get_profile_by_user(db, user)
+    
+    # Check for active subscription
+    stmt = (
+        select(Subscription)
+        .where(Subscription.user_id == user.id, Subscription.status == "active")
+        .order_by(Subscription.expires_at.desc())
+        .limit(1)
+    )
+    res = await db.execute(stmt)
+    sub = res.scalar_one_or_none()
+    
+    return {
+        "plan": profile.plan,
+        "expires_at": sub.expires_at if sub else None,
+        "is_trial": False, # Future use
+    }
+
+
 @router.patch("/me", response_model=ProfileResponse)
 async def update_my_profile(
     data: ProfileUpdate,

@@ -38,3 +38,19 @@ class Subscription(Base):
 
     def __repr__(self) -> str:
         return f"<Subscription id={self.id} plan={self.plan!r} status={self.status!r}>"
+
+
+class PendingInvoice(Base):
+    __tablename__ = "pending_invoices"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    plan_id: Mapped[str] = mapped_column(String(16), nullable=False)
+    invoice_payload: Mapped[str] = mapped_column(String(128), unique=True, nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(16), default="pending")  # pending, completed, expired
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+    # Relationships
+    user: Mapped["User"] = relationship()

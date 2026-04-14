@@ -52,6 +52,7 @@ async def lifespan(app: FastAPI):
         from tglinktree.bot import create_bot_application
 
         bot_app = create_bot_application(settings.BOT_TOKEN, settings.WEBAPP_URL)
+        app.state.bot = bot_app.bot # Expose bot for routers
 
         async def run_bot():
             """Run the bot polling in background."""

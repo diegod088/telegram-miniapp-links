@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyProfile, createProfile, addLink, deleteLink } from '../api';
 import WebApp from '@twa-dev/sdk';
-import { Loader2, Link as LinkIcon, Trash2, PlusCircle, UserPlus, Share } from 'lucide-react';
+import { Loader2, Link as LinkIcon, Trash2, PlusCircle, UserPlus, Share, Gem, ArrowUpCircle } from 'lucide-react';
 import { isAffiliateDomain } from '../utils/affiliates';
+import PaymentModal from './PaymentModal';
 
 const CATEGORY_SCOPES = [
   { id: 'OTHER', name: 'General' },
@@ -16,6 +17,7 @@ const CATEGORY_SCOPES = [
 export const ProfilePage: React.FC = () => {
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Profile Form States
   const [slug, setSlug] = useState('');
@@ -193,20 +195,42 @@ export const ProfilePage: React.FC = () => {
         </div>
 
         {/* Profile Stats */}
-        <div className="grid grid-cols-3 gap-2 mb-8">
+        <div className="grid grid-cols-4 gap-2 mb-8">
           <div className="bg-[#1a1b1e]/60 border border-white/5 rounded-2xl p-4 text-center">
-            <p className="text-white/40 text-xs font-bold uppercase mb-1">🔗 Enlaces</p>
+            <p className="text-white/40 text-xs font-bold uppercase mb-1">🔗</p>
             <p className="text-white font-black text-xl">{stats.links}</p>
           </div>
           <div className="bg-[#1a1b1e]/60 border border-white/5 rounded-2xl p-4 text-center">
-            <p className="text-white/40 text-xs font-bold uppercase mb-1">👀 Visitas</p>
+            <p className="text-white/40 text-xs font-bold uppercase mb-1">👀</p>
             <p className="text-white font-black text-xl">{stats.views}</p>
           </div>
           <div className="bg-[#1a1b1e]/60 border border-white/5 rounded-2xl p-4 text-center">
-            <p className="text-white/40 text-xs font-bold uppercase mb-1">❤️ Votos</p>
+            <p className="text-white/40 text-xs font-bold uppercase mb-1">❤️</p>
             <p className="text-white font-black text-xl">{stats.upvotes}</p>
           </div>
+          <button 
+            onClick={() => setShowPaymentModal(true)}
+            className={`rounded-2xl p-4 text-center border transition-all active:scale-95 ${
+              profile?.plan === 'free' 
+                ? 'bg-gradient-to-br from-blue-600 to-blue-800 border-blue-400/30' 
+                : profile?.plan === 'pro'
+                  ? 'bg-gradient-to-br from-purple-600 to-indigo-800 border-purple-400/30'
+                  : 'bg-gradient-to-br from-amber-500 to-orange-700 border-amber-400/30'
+            }`}
+          >
+            <p className="text-white/70 text-[10px] font-bold uppercase mb-1 flex items-center justify-center gap-1">
+              {profile?.plan === 'free' ? <Gem size={10} /> : <ArrowUpCircle size={10} />}
+            </p>
+            <p className="text-white font-black text-sm">Plan</p>
+          </button>
         </div>
+
+        {/* Payment Modal */}
+        <PaymentModal 
+          isOpen={showPaymentModal} 
+          onClose={() => setShowPaymentModal(false)} 
+          currentPlan={profile?.plan || 'free'} 
+        />
 
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-black text-white">Mis Enlaces</h2>

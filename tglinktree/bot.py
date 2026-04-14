@@ -32,6 +32,11 @@ def create_bot_application(bot_token: str, webapp_url: str):
     app.add_handler(CommandHandler("myprofile", cmd_myprofile))
     app.add_handler(CommandHandler("help", cmd_help))
 
+    # Payment Handlers
+    from tglinktree.bot.handlers.payment_handlers import get_payment_handlers
+    for handler in get_payment_handlers():
+        app.add_handler(handler)
+
     return app
 
 
