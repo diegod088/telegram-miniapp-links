@@ -59,6 +59,8 @@ class LinkUpdate(BaseModel):
     description: Optional[str] = None
     icon: Optional[str] = None
     is_active: Optional[bool] = None
+    is_premium: Optional[bool] = None
+    category: Optional[str] = None
     link_type: Optional[str] = None
     style: Optional[dict] = None
 

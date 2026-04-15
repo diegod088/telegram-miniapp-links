@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getRedirectInfo } from '../api';
-import { Loader2, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import { Loader2, ArrowRight, ShieldCheck, Zap, Tv, Crown } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -14,8 +14,9 @@ export const RedirectPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<{ affiliate_url: string; title: string, is_monetized?: boolean } | null>(null);
+  const [data, setData] = useState<{ affiliate_url: string; title: string; is_monetized?: boolean } | null>(null);
   const [countdown, setCountdown] = useState(3);
+  const [showAdNotice, setShowAdNotice] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +25,10 @@ export const RedirectPage: React.FC = () => {
         const result = await getRedirectInfo(Number(id));
         setData(result);
         setLoading(false);
+        // Si es monetizado, mostrar aviso de anuncios
+        if (result.is_monetized) {
+          setShowAdNotice(true);
+        }
       } catch (err) {
         setError('Failed to fetch redirect info.');
         setLoading(false);
@@ -33,21 +38,49 @@ export const RedirectPage: React.FC = () => {
   }, [id]);
 
   useEffect(() => {
-    if (!loading && data && countdown > 0) {
+    // Solo iniciar countdown si NO se muestra el aviso de anuncios
+    if (!loading && data && countdown > 0 && !showAdNotice) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     }
-  }, [countdown, loading, data]);
+  }, [countdown, loading, data, showAdNotice]);
+
+  const handleOpenLink = (url: string, isMonetized: boolean) => {
+    if (isMonetized) {
+      // Estrategia 1: Intentar con WebApp.openLink (oficial)
+      try {
+        // Nota: El SDK estándar usa try_instant_view, pero pasamos el objeto por si acaso
+        // @ts-ignore
+        WebApp.openLink(url, { try_browser: 'chrome' });
+      } catch (e) {
+        console.warn('WebApp.openLink falló, usando fallbacks', e);
+      }
+      
+      // Estrategia 2: Fallback con window.open (intenta abrir pestaña nueva fuera del iframe)
+      const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+      
+      // Estrategia 3: Fallback final si los anteriores no dispararon navegación top-level
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        window.location.href = url;
+      }
+    } else {
+      // Para VIP o enlaces no monetizados, comportamiento estándar
+      WebApp.openLink(url);
+    }
+  };
+
+  const handleAcceptAds = () => {
+    setShowAdNotice(false);
+    if (data) {
+      handleOpenLink(data.affiliate_url, true);
+    }
+  };
 
   const handleContinue = () => {
     if (data) {
-      if (data.is_monetized) {
-        // Enlaces monetizados: fuerza redirección (Linkvertise lo necesita)
-        window.location.href = data.affiliate_url;
-      } else {
-        // Enlaces directos VIP: se mantienen dentro de Telegram (in-app browser)
-        WebApp.openLink(data.affiliate_url);
-        navigate(-1); // Regresamos atras en la mini app despues de abrir el popup inside Telegram
+      handleOpenLink(data.affiliate_url, !!data.is_monetized);
+      if (!data.is_monetized) {
+        navigate(-1);
       }
     }
   };
@@ -56,7 +89,7 @@ export const RedirectPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#0a0a0b] flex flex-col items-center justify-center p-6 text-center">
         <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-6" />
-        <h2 className="text-xl font-bold text-white">Preparing your link...</h2>
+        <h2 className="text-xl font-bold text-white">Preparando tu enlace...</h2>
       </div>
     );
   }
@@ -78,6 +111,80 @@ export const RedirectPage: React.FC = () => {
     );
   }
 
+  // Modal de aviso de anuncios para usuarios free
+  if (showAdNotice) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0b] flex flex-col items-center justify-center p-6 overflow-hidden">
+        <div className="w-full max-w-sm">
+          {/* Glassmorphism Card */}
+          <div className="relative bg-white/[0.06] backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+            {/* Glow effect */}
+            <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 bg-[#0088cc]/30 rounded-full blur-3xl pointer-events-none" />
+            
+            {/* Icon */}
+            <div className="relative flex justify-center mb-6">
+              <div className="w-20 h-20 rounded-3xl bg-[#0088cc]/20 flex items-center justify-center border border-[#0088cc]/20">
+                <Tv className="w-10 h-10 text-[#0088cc]" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-black text-white text-center mb-3">
+              Preparando tu enlace...
+            </h2>
+
+            {/* Message */}
+            <p className="text-white/50 text-center text-sm leading-relaxed mb-8">
+              Para ofrecerte este contenido gratis, necesitamos que veas{' '}
+              <span className="text-[#0088cc] font-bold">2 anuncios breves</span>{' '}
+              (menos de 10 segundos).
+              <br />
+              <span className="text-white/30 mt-2 block">¡Gracias por apoyar la comunidad! 💙</span>
+            </p>
+
+            {/* Destination preview */}
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 mb-6 text-center">
+              <p className="text-white/30 text-[10px] uppercase tracking-widest font-bold mb-1">Destino</p>
+              <p className="text-white font-bold text-sm truncate">{data.title}</p>
+            </div>
+
+            {/* CTA Button */}
+            <button
+              onClick={handleAcceptAds}
+              className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 bg-[#0088cc] text-white shadow-xl shadow-[#0088cc]/20 active:scale-95 transition-all hover:bg-[#0099dd]"
+            >
+              Continuar y ver anuncios
+              <ArrowRight className="w-5 h-5" />
+            </button>
+
+            {/* Browser tip */}
+            <p className="mt-4 text-[10px] text-white/30 text-center px-4 leading-tight">
+              Tip: Si el enlace no carga, asegúrate de activar el <span className="text-white/50">"Navegador Externo"</span> en los ajustes de Telegram o pulsa los 3 puntos y selecciona "Abrir en navegador".
+            </p>
+
+            {/* VIP upsell */}
+            <div className="mt-6 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl p-4 flex items-start gap-3">
+              <Crown className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-white/70 text-xs leading-relaxed">
+                  <span className="text-purple-400 font-bold">¿Quieres acceso directo?</span>{' '}
+                  Hazte VIP y salta todos los anuncios.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer className="w-full text-center mt-10 pb-10">
+          <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold">
+            Powered by TGLinktree Network
+          </p>
+        </footer>
+      </div>
+    );
+  }
+
+  // Pantalla normal de redirección (para VIP o después de aceptar anuncios)
   return (
     <div className="min-h-screen bg-[#0a0a0b] flex flex-col items-center justify-between p-6 overflow-hidden">
       <div className="w-full max-w-sm flex flex-col items-center mt-20">

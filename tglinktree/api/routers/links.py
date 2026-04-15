@@ -83,7 +83,7 @@ async def add_link(
     return link
 
 
-@router.patch("/{link_id}", response_model=LinkResponse)
+@router.put("/{link_id}", response_model=LinkResponse)
 async def edit_link(
     link_id: int,
     data: LinkUpdate,
@@ -92,6 +92,31 @@ async def edit_link(
 ):
     """Edit a link owned by the user."""
     link = await _get_own_link(db, user, link_id)
+
+    if data.title is not None:
+        # Sanitize title
+        sanitized = re.sub(r"(porno|xxx|follar|sex|nudes)", "[Contenido]", data.title, flags=re.IGNORECASE)
+        sanitized = re.sub(r"[🔞🍆💦]", "[Contenido]", sanitized)
+        link.title = sanitized
+    if data.url is not None:
+        link.url = data.url
+        link.canonical_url = await social_service.scrub_url(data.url)
+    if data.description is not None:
+        link.description = data.description
+    if data.icon is not None:
+        link.icon = data.icon
+    if data.is_active is not None:
+        link.is_active = data.is_active
+    if data.link_type is not None:
+        link.link_type = data.link_type
+    if data.style is not None:
+        link.style = data.style
+
+    # is_premium only editable by VIP users
+    if hasattr(data, "is_premium") and getattr(data, "is_premium", None) is not None:
+        profile = await get_profile_by_user(db, user)
+        if profile.plan in ("pro", "business"):
+            link.is_premium = data.is_premium
 
     await db.flush()
     # Update search index
