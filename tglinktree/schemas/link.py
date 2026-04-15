@@ -45,7 +45,7 @@ class LinkCreate(BaseModel):
     @field_validator("category")
     @classmethod
     def validate_category(cls, v: str) -> str:
-        allowed = {"COURSE", "AI_TOOL", "DEAL", "CRYPTO", "OTHER"}
+        allowed = {"MOVIES", "SERIES", "ADULT", "VIP", "OTHER"}
         v = v.upper()
         if v not in allowed:
             return "OTHER"

@@ -1,17 +1,23 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMyProfile, createProfile, addLink, deleteLink } from '../api';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: any[]) {
+  return twMerge(clsx(inputs));
+}
+import { getMyProfile, createProfile, addLink, deleteLink, boostLink } from '../api';
 import WebApp from '@twa-dev/sdk';
 import { Loader2, Link as LinkIcon, Trash2, PlusCircle, UserPlus, Share, Gem, ArrowUpCircle } from 'lucide-react';
 import { isAffiliateDomain } from '../utils/affiliates';
 import PaymentModal from './PaymentModal';
 
 const CATEGORY_SCOPES = [
-  { id: 'OTHER', name: 'General' },
-  { id: 'COURSE', name: 'Cursos & Ed.' },
-  { id: 'AI_TOOL', name: 'Herramientas AI' },
-  { id: 'DEAL', name: 'Ofertas' },
-  { id: 'CRYPTO', name: 'Crypto/Web3' },
+  { id: 'OTHER', name: 'Otros' },
+  { id: 'MOVIES', name: 'Películas' },
+  { id: 'SERIES', name: 'Series' },
+  { id: 'ADULT', name: 'Contenido +18' },
+  { id: 'VIP', name: 'Canales VIP' },
 ];
 
 export const ProfilePage: React.FC = () => {
@@ -80,6 +86,22 @@ export const ProfilePage: React.FC = () => {
       const msg = Array.isArray(detail)
         ? detail.map((d: any) => d.msg || d).join(', ')
         : (detail || 'Error eliminando enlace.');
+      try { WebApp.showAlert(msg); } catch(_) { alert(msg); }
+    }
+  });
+
+  const boostLinkMutation = useMutation({
+    mutationFn: boostLink,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+      WebApp.HapticFeedback.notificationOccurred('success');
+      try { WebApp.showAlert('🚀 ¡Enlace destacado por 24 horas!'); } catch(_) { alert('🚀 ¡Enlace destacado por 24 horas!'); }
+    },
+    onError: (err: any) => {
+      const detail = err?.response?.data?.detail;
+      const msg = Array.isArray(detail)
+        ? detail.map((d: any) => d.msg || d).join(', ')
+        : (detail || 'Error al destacar enlace.');
       try { WebApp.showAlert(msg); } catch(_) { alert(msg); }
     }
   });
@@ -319,15 +341,32 @@ export const ProfilePage: React.FC = () => {
                 </h3>
                 <p className="text-white/40 text-xs truncate">{link.url}</p>
               </div>
-              <button 
-                onClick={() => {
-                  if(window.confirm('¿Eliminar este enlace?')) deleteLinkMutation.mutate(link.id);
-                }}
-                className="p-2 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
-                disabled={deleteLinkMutation.isPending}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                {(profile?.plan === 'pro' || profile?.plan === 'business') && (
+                  <button 
+                    onClick={() => boostLinkMutation.mutate(link.id)}
+                    className={cn(
+                      "p-2 rounded-lg transition-all active:scale-95",
+                      link.boosted_until && new Date(link.boosted_until) > new Date()
+                        ? "text-yellow-400 bg-yellow-500/10"
+                        : "text-white/20 hover:text-blue-400 hover:bg-blue-500/10"
+                    )}
+                    disabled={boostLinkMutation.isPending}
+                    title="Boost 24h"
+                  >
+                    <ArrowUpCircle className="w-4 h-4" />
+                  </button>
+                )}
+                <button 
+                  onClick={() => {
+                    if(window.confirm('¿Eliminar este enlace?')) deleteLinkMutation.mutate(link.id);
+                  }}
+                  className="p-2 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
+                  disabled={deleteLinkMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -134,6 +134,42 @@ async def get_discovery_feed(
     return list(results.scalars().all()), total
 
 
+async def get_profile_with_filtered_links(
+    db: AsyncSession,
+    slug: str,
+    viewer_plan: str = "free"
+) -> Profile:
+    """
+    Get a profile by slug and filter its links based on the viewer's plan.
+    If viewer is 'free', is_premium links are excluded.
+    """
+    result = await db.execute(
+        select(Profile)
+        .where(Profile.slug == slug, Profile.is_public == True)
+        .options(selectinload(Profile.links).selectinload(ProfileLink.locks))
+    )
+    profile = result.scalar_one_or_none()
+    if not profile:
+        from tglinktree.core.exceptions import NotFoundError
+        raise NotFoundError(f"Profile '{slug}' not found.")
+
+    # Get the raw links list to avoid modifying the identity-mapped collection in-place
+    all_links = list(profile.links)
+
+    # Filter links: remove is_premium if viewer is free
+    if viewer_plan == "free":
+        filtered_links = [link for link in all_links if not link.is_premium]
+    else:
+        filtered_links = all_links
+
+    # Additionally sort links by boosted_until
+    filtered_links.sort(key=lambda x: (x.boosted_until or datetime.min), reverse=True)
+
+    # Attach the filtered list as a non-persistent attribute
+    profile.filtered_links = filtered_links
+    return profile
+
+
 async def refresh_trending_scores(db: AsyncSession) -> int:
     """
     Recalculate trending_score for all active profiles.

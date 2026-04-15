@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import Integer, BigInteger, Boolean, DateTime, ForeignKey, Index, SmallInteger, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.types import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tglinktree.core.database import Base
@@ -25,7 +25,7 @@ class ProfileLink(Base):
     position: Mapped[int] = mapped_column(SmallInteger, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     link_type: Mapped[str] = mapped_column(String(32), default="url")
-    style: Mapped[dict] = mapped_column(JSONB, default=dict)
+    style: Mapped[dict] = mapped_column(JSON, default=dict)
 
     # Social Fields
     category: Mapped[str] = mapped_column(String(32), default="OTHER", index=True)
@@ -33,8 +33,10 @@ class ProfileLink(Base):
     upvotes: Mapped[int] = mapped_column(Integer, default=0)
     views: Mapped[int] = mapped_column(Integer, default=0)
     is_sponsored: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_premium: Mapped[bool] = mapped_column(Boolean, default=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=True)
     report_count: Mapped[int] = mapped_column(Integer, default=0)
+    boosted_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
 
     # Relationships

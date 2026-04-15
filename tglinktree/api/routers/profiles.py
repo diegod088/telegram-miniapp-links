@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from tglinktree.api.deps import get_db, rate_limit_auth, rate_limit_public
-from tglinktree.api.auth import get_current_user
+from tglinktree.api.auth import get_current_user, get_current_user_optional
 from tglinktree.models.link import ProfileLink
 from tglinktree.models.lock import ContentLock
 from tglinktree.models.user import User
@@ -23,7 +23,7 @@ from tglinktree.schemas.profile import (
     ProfileUpdate,
     LinkInProfile,
 )
-from tglinktree.services import profile_service
+from tglinktree.services import profile_service, discovery_service
 from tglinktree.services.analytics_service import track_event
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
@@ -54,14 +54,25 @@ async def get_my_profile(
 async def get_public_profile(
     slug: str,
     db: AsyncSession = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user_optional),
     _rate: None = Depends(rate_limit_public),
 ):
     """Get a public profile by slug. No auth required."""
-    profile = await profile_service.get_profile_by_slug(db, slug)
+    # 1. Determine viewer plan
+    viewer_plan = "free"
+    if user:
+        # Check for active subscription or profile plan
+        # We can fetch the user's profile to see their plan
+        stmt = select(Profile.plan).where(Profile.user_id == user.id)
+        res = await db.execute(stmt)
+        viewer_plan = res.scalar_one_or_none() or "free"
+
+    # 2. Get profile with filtered links (Discovery Service helper)
+    profile = await discovery_service.get_profile_with_filtered_links(db, slug, viewer_plan)
 
     # Build response with lock status per link
     links = []
-    for link in profile.links:
+    for link in profile.filtered_links:
         if not link.is_active:
             continue
 

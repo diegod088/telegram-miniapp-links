@@ -13,8 +13,10 @@ from tglinktree.models.profile import Profile
 from tglinktree.models.user import User
 from tglinktree.schemas.link import LinkCreate, LinkReorder, LinkResponse, LinkUpdate
 from tglinktree.middleware.plan_limits import check_link_limit
-from tglinktree.services.profile_service import get_profile_by_user
+from tglinktree.services.profile_service import get_profile_by_user, check_daily_limit
 from tglinktree.services import discovery_service, social_service
+import re
+from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/profiles/me/links", tags=["links"])
 
@@ -27,6 +29,9 @@ async def add_link(
     _limit: None = Depends(check_link_limit),
 ):
     """Add a link to the user's profile."""
+    # 0. Check daily limit
+    await check_daily_limit(db, user)
+
     profile = await get_profile_by_user(db, user)
 
     # 1. Scrub URL
@@ -37,6 +42,12 @@ async def add_link(
     if not title:
         scraped_title = await social_service.scrape_page_title(canonical_url)
         title = scraped_title or canonical_url # Fallback to URL as title
+
+    # Sanitization (Adult Content Protection)
+    forbidden_keywords = r"(porno|xxx|follar|sex|nudes)"
+    title = re.sub(forbidden_keywords, "[Contenido]", title, flags=re.IGNORECASE)
+    # Emojis protection
+    title = re.sub(r"[🔞🍆💦]", "[Contenido]", title)
 
     # 3. Determine next position
     result = await db.execute(
@@ -61,6 +72,11 @@ async def add_link(
         position=next_position,
     )
     db.add(link)
+    
+    # Update user statistics
+    user.daily_link_count += 1
+    user.last_link_created_at = datetime.utcnow()
+    
     await db.flush()
     # Update search index in background
     await discovery_service.update_search_vector(db, profile.id)
@@ -120,6 +136,26 @@ async def reorder_links(
 
     await db.flush()
     return {"message": "Links reordered successfully."}
+
+
+@router.post("/{link_id}/boost", response_model=LinkResponse)
+async def boost_link(
+    link_id: int,
+    user: User = Depends(rate_limit_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Boost a link for 24h (Pro/Business Plan required)."""
+    profile = await get_profile_by_user(db, user)
+    
+    if profile.plan not in ["pro", "business"]:
+        from tglinktree.core.exceptions import ForbiddenError
+        raise ForbiddenError("Upgrade help reach more people with Boost.")
+
+    link = await _get_own_link(db, user, link_id)
+    link.boosted_until = datetime.utcnow() + timedelta(days=1)
+    
+    await db.flush()
+    return link
 
 
 async def _get_own_link(

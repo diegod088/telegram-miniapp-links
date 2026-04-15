@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     AFFILIATE_TAG_ALIEXPRESS: str = ""
     AFFILIATE_TAG_TEMU: str = ""
     AFFILIATE_TAG_SHEIN: str = ""
+    AFFILIATE_TAG_TERABOX: str = ""
+    AFFILIATE_TAG_STREAMTAPE: str = ""
+    AFFILIATE_TAG_DOODSTREAM: str = ""
+    AFFILIATE_TAG_VOE_SX: str = ""
 
     @field_validator("DATABASE_URL")
     @classmethod

@@ -5,8 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Integer, BigInteger, Integer, ForeignKey, Numeric, String
-from sqlalchemy.dialects.postgresql import TIMESTAMP
+from sqlalchemy import Integer, BigInteger, Integer, ForeignKey, Numeric, String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tglinktree.core.database import Base
@@ -27,10 +26,10 @@ class Subscription(Base):
     currency: Mapped[str | None] = mapped_column(String(8), nullable=True)
     started_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     expires_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
+        DateTime(timezone=True), nullable=True
     )
     cancelled_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
+        DateTime(timezone=True), nullable=True
     )
 
     # Relationships

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from datetime import datetime, date
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -22,6 +23,34 @@ def _max_links_for_plan(plan: str) -> int:
         "pro": settings.MAX_LINKS_PRO,
         "business": settings.MAX_LINKS_BUSINESS,
     }.get(plan, settings.MAX_LINKS_FREE)
+
+
+async def check_daily_limit(db: AsyncSession, user: User) -> None:
+    """
+    Check if a free user has reached their daily link creation limit.
+    Free limit: 3 links per 24h.
+    """
+    # 1. Handle Reset
+    today = date.today()
+    if user.last_reset_date is None or today > user.last_reset_date:
+        user.daily_link_count = 0
+        user.last_reset_date = today
+        await db.flush()
+
+    # 2. Check Plan and Limit
+    # We need the profile to check the current plan (profiles are linked to users)
+    # However, the user said "Si plan='free'". 
+    # Usually users have one profile. Let's fetch it.
+    stmt = select(Profile.plan).where(Profile.user_id == user.id)
+    result = await db.execute(stmt)
+    plan = result.scalar_one_or_none() or "free"
+
+    if plan == "free" and user.daily_link_count >= 3:
+        from tglinktree.core.exceptions import PlanLimitError
+        raise PlanLimitError(
+            message="Límite diario alcanzado. Hazte VIP para links ilimitados.",
+            current_plan="free"
+        )
 
 
 def _boost_score_for_plan(plan: str) -> float:

@@ -56,6 +56,11 @@ export const deleteLink = async (linkId: number) => {
   return response.data;
 };
 
+export const boostLink = async (linkId: number) => {
+  const response = await api.post(`/profiles/me/links/${linkId}/boost`);
+  return response.data;
+};
+
 // --- Payments ---
 
 export const createInvoice = async (planId: string) => {

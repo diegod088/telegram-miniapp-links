@@ -7,7 +7,7 @@ import { Loader2, Sparkles, Search, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useNavigate } from 'react-router-dom';
 
-const CATEGORIES = ["ALL", "COURSE", "AI_TOOL", "DEAL", "CRYPTO", "OTHER"];
+const CATEGORIES = ["ALL", "MOVIES", "SERIES", "ADULT", "VIP", "OTHER"];
 
 export const ExploreFeed: React.FC = () => {
   const [category, setCategory] = useState("ALL");

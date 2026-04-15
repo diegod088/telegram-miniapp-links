@@ -38,6 +38,26 @@ def get_affiliate_url(url: str) -> str:
         if settings.AFFILIATE_TAG_SHEIN:
             return _append_param(url, "aff_id", settings.AFFILIATE_TAG_SHEIN)
             
+    # 5. Terabox
+    if "terabox.com" in domain:
+        if settings.AFFILIATE_TAG_TERABOX:
+            return _append_param(url, "affid", settings.AFFILIATE_TAG_TERABOX)
+
+    # 6. Streamtape
+    if "streamtape.com" in domain:
+        if settings.AFFILIATE_TAG_STREAMTAPE:
+            return _append_param(url, "affid", settings.AFFILIATE_TAG_STREAMTAPE)
+
+    # 7. Doodstream
+    if "doodstream.com" in domain:
+        if settings.AFFILIATE_TAG_DOODSTREAM:
+            return _append_param(url, "affid", settings.AFFILIATE_TAG_DOODSTREAM)
+
+    # 8. Voe.sx
+    if "voe.sx" in domain:
+        if settings.AFFILIATE_TAG_VOE_SX:
+            return _append_param(url, "affid", settings.AFFILIATE_TAG_VOE_SX)
+            
     return url
 
 def _append_param(url: str, key: str, value: str) -> str:

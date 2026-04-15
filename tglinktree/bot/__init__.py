@@ -31,6 +31,7 @@ def create_bot_application(bot_token: str, webapp_url: str):
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("myprofile", cmd_myprofile))
     app.add_handler(CommandHandler("help", cmd_help))
+    app.add_handler(CommandHandler("vip", cmd_vip))
 
     # Payment Handlers
     from tglinktree.bot.handlers.payment_handlers import get_payment_handlers
@@ -129,3 +130,37 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_text(help_text, parse_mode="Markdown")
+
+
+async def cmd_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    /vip — Show benefits and link to upgrade.
+    """
+    webapp_url = context.bot_data.get("webapp_url", "https://example.com")
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton(
+            "💎 Hacerse VIP (Pro)",
+            web_app=WebAppInfo(url=f"{webapp_url}#/vip"),
+        )],
+        [InlineKeyboardButton(
+            "💼 Plan Business",
+            web_app=WebAppInfo(url=f"{webapp_url}#/vip"),
+        )],
+    ])
+
+    vip_text = (
+        "🌟 **¡Sé un usuario VIP de TGLinktree!** 🌟\n\n"
+        "Desbloquea todo el potencial de tu perfil:\n"
+        "✅ **Links Ilimitados** (Sin límite diario)\n"
+        "🚀 **Boost de 24h** (Aparece en el top del feed)\n"
+        "📊 **Analytics Avanzado** (Hasta 365 días)\n"
+        "🔒 **Más tipos de bloqueos** (Contraseña, Pago)\n\n"
+        "Mejora tu plan ahora y destaca sobre el resto 👇"
+    )
+
+    await update.message.reply_text(
+        vip_text,
+        reply_markup=keyboard,
+        parse_mode="Markdown",
+    )

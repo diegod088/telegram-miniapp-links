@@ -8,7 +8,7 @@ from telegram.ext import ContextTypes, PreCheckoutQueryHandler, MessageHandler, 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from tglinktree.core.database import SessionLocal
+from tglinktree.core.database import async_session_factory
 from tglinktree.models.payment import PendingInvoice, Subscription
 from tglinktree.models.profile import Profile
 from tglinktree.models.user import User
@@ -29,7 +29,7 @@ async def successful_payment_handler(update: Update, context: ContextTypes.DEFAU
     
     logger.info(f"Successful payment received: {payload}")
     
-    async with SessionLocal() as db:
+    async with async_session_factory() as db:
         # 1. Find the pending invoice
         stmt = select(PendingInvoice).where(PendingInvoice.invoice_payload == payload)
         result = await db.execute(stmt)

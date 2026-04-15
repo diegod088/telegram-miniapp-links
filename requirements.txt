@@ -21,3 +21,4 @@ httpx==0.27.0
 
 # Environment
 python-dotenv==1.0.1
+linkvertise>=1.0.0

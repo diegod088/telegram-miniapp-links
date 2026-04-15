@@ -63,4 +63,23 @@ async def get_current_user(
     if user.is_banned:
         raise ForbiddenError(f"User banned: {user.ban_reason or 'No reason given'}")
 
+    # Inject 'plan' into the User object from their Profile (default to 'free')
+    from tglinktree.models.profile import Profile
+    plan_result = await db.execute(select(Profile.plan).where(Profile.user_id == user.id))
+    user_plan = plan_result.scalar_one_or_none()
+    setattr(user, "plan", user_plan or "free")
+
     return user
+
+
+async def get_current_user_optional(
+    x_init_data: str | None = Header(None, alias="X-Telegram-Init-Data"),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """Optional version of get_current_user. Returns None if header missing/invalid."""
+    if not x_init_data:
+        return None
+    try:
+        return await get_current_user(x_init_data, db)
+    except Exception:
+        return None

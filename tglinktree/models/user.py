@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, date
 
-from sqlalchemy import Integer, BigInteger, Integer, Boolean, Index, String, Text
+from sqlalchemy import Integer, BigInteger, Boolean, Index, String, Text, Date, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tglinktree.core.database import Base
@@ -30,6 +30,9 @@ class User(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
     )
+    last_link_created_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    daily_link_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_reset_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     # Relationships
     profiles: Mapped[list["Profile"]] = relationship(  # noqa: F821

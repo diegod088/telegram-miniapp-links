@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from tglinktree.api.deps import get_db, get_current_user, check_rate_limit
+from tglinktree.api.auth import get_current_user_optional
 from tglinktree.core.exceptions import NotFoundError, RateLimitError
 from tglinktree.models.link import ProfileLink
 from tglinktree.models.profile import Profile
@@ -109,11 +110,13 @@ async def upvote_link(
 async def redirect_link(
     link_id: int = Path(...),
     background_tasks: BackgroundTasks = None,
+    user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Record a view and return the affiliate URL.
-    Does NOT return a 302, but a JSON for the frontend interstitial.
+    Free users get a Linkvertise-monetized URL.
+    Pro/Business (VIP) users get the direct affiliate URL.
     """
     stmt = select(ProfileLink).where(ProfileLink.id == link_id)
     result = await db.execute(stmt)
@@ -124,7 +127,6 @@ async def redirect_link(
         
     # 1. Increment views (background task to not block)
     async def increment_views(l_id: int):
-        # We need a new session for background task
         from tglinktree.core.database import async_session_factory
         async with async_session_factory() as session:
             await session.execute(
@@ -144,8 +146,21 @@ async def redirect_link(
     from tglinktree.services import affiliate
     target_url = link.canonical_url or link.url
     affiliate_url = affiliate.get_affiliate_url(target_url)
-    
+
+    # 3. Determine viewer plan — wrap with Linkvertise for free users
+    viewer_plan = "free"
+    if user:
+        plan_stmt = select(Profile.plan).where(Profile.user_id == user.id)
+        plan_result = await db.execute(plan_stmt)
+        viewer_plan = plan_result.scalar_one_or_none() or "free"
+
+    final_url = affiliate_url
+    if viewer_plan == "free":
+        from tglinktree.services.linkvertise import create_linkvertise_url
+        final_url = create_linkvertise_url(affiliate_url)
+
     return {
-        "affiliate_url": affiliate_url,
-        "title": link.title
+        "affiliate_url": final_url,
+        "title": link.title,
+        "is_monetized": viewer_plan == "free",
     }

@@ -5,8 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Integer, BigInteger, Boolean, CheckConstraint, ForeignKey, Index, String, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP
+from sqlalchemy import Integer, BigInteger, Boolean, CheckConstraint, ForeignKey, Index, String, UniqueConstraint, DateTime, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tglinktree.core.database import Base
@@ -27,7 +26,7 @@ class ContentLock(Base):
         nullable=True,
     )
     lock_type: Mapped[str] = mapped_column(String(32), nullable=False)
-    config: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    config: Mapped[dict] = mapped_column(JSON, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
@@ -66,7 +65,7 @@ class UserUnlock(Base):
     )
     unlocked_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     expires_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
+        DateTime(timezone=True), nullable=True
     )
     method: Mapped[str | None] = mapped_column(String(32), nullable=True)
     payment_id: Mapped[str | None] = mapped_column(String(128), nullable=True)

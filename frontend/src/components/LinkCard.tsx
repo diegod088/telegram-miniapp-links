@@ -17,6 +17,7 @@ interface LinkCardProps {
   views: number;
   isVerified: boolean;
   isSponsored: boolean;
+  isPremium: boolean;
   username?: string;
   onRedirect: (id: number) => void;
 }
@@ -29,6 +30,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({
   views,
   isVerified,
   isSponsored,
+  isPremium,
   username,
   onRedirect,
 }) => {
@@ -66,6 +68,12 @@ export const LinkCard: React.FC<LinkCardProps> = ({
       {isSponsored && (
         <div className="absolute -top-3 left-4 bg-yellow-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
           Sponsored
+        </div>
+      )}
+
+      {isPremium && (
+        <div className="absolute -top-3 right-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow-lg shadow-purple-600/20 flex items-center gap-1">
+          <span className="animate-pulse">💎</span> VIP
         </div>
       )}
       

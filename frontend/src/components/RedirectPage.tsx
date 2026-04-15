@@ -14,7 +14,7 @@ export const RedirectPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<{ affiliate_url: string; title: string } | null>(null);
+  const [data, setData] = useState<{ affiliate_url: string; title: string, is_monetized?: boolean } | null>(null);
   const [countdown, setCountdown] = useState(3);
   const navigate = useNavigate();
 
@@ -41,8 +41,14 @@ export const RedirectPage: React.FC = () => {
 
   const handleContinue = () => {
     if (data) {
-      WebApp.openLink(data.affiliate_url);
-      navigate(-1); // Go back in the mini app
+      if (data.is_monetized) {
+        // Enlaces monetizados: fuerza redirección (Linkvertise lo necesita)
+        window.location.href = data.affiliate_url;
+      } else {
+        // Enlaces directos VIP: se mantienen dentro de Telegram (in-app browser)
+        WebApp.openLink(data.affiliate_url);
+        navigate(-1); // Regresamos atras en la mini app despues de abrir el popup inside Telegram
+      }
     }
   };
 
