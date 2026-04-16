@@ -53,6 +53,13 @@ class RateLimitError(AppError):
 
 # ── Global Exception Handlers ────────────────────────────────
 
+class ValidationError(AppError):
+    """Raised when input validation fails (e.g., bad slug)."""
+    def __init__(self, message: str = "Validation failed"):
+        super().__init__(message=message, status_code=422)
+
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     """Register all custom exception handlers on the FastAPI app."""
 

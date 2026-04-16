@@ -7,7 +7,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, rate_limit_public
+from app.api.deps import get_db, rate_limit_public, rate_limit_auth
 from app.models.user import User
 from app.schemas.profile import ExploreProfileItem, ExploreResponse
 from app.services.discovery_service import DiscoveryService
