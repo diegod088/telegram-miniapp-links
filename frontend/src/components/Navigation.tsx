@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Compass, User } from 'lucide-react';
+import { Compass, User, Sparkles } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -18,8 +18,8 @@ export const Navigation: React.FC = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4 pb-6 bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none flex justify-center z-50">
-      <div className="bg-[#1a1b1e]/90 backdrop-blur-xl border border-white/10 rounded-full p-1 flex items-center gap-2 pointer-events-auto shadow-2xl">
+    <div className="fixed bottom-0 left-0 right-0 p-6 pb-10 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/80 to-transparent pointer-events-none flex justify-center z-50">
+      <div className="bg-[#1a1b1e]/80 backdrop-blur-2xl border border-white/10 rounded-[32px] p-2 flex items-center gap-1 pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         {tabs.map((tab) => {
           const isActive = location.pathname.startsWith(tab.path);
           const Icon = tab.icon;
@@ -29,14 +29,20 @@ export const Navigation: React.FC = () => {
               key={tab.path}
               onClick={() => navigate(tab.path)}
               className={cn(
-                "flex items-center gap-2 px-6 py-3 rounded-full transition-all text-sm font-bold",
+                "group relative flex items-center gap-2 px-8 py-4 rounded-[24px] transition-all duration-300",
                 isActive 
-                  ? "bg-white/10 text-white shadow-inner" 
-                  : "text-white/40 hover:text-white/70 hover:bg-white/5 active:scale-95"
+                  ? "bg-white text-black shadow-xl" 
+                  : "text-white/30 hover:text-white/60 hover:bg-white/5 active:scale-95"
               )}
             >
-              <Icon className={cn("w-5 h-5", isActive ? "text-blue-400" : "text-white/40")} />
-              {tab.name}
+              <Icon className={cn("w-5 h-5 transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")} />
+              <span className="text-xs font-black uppercase tracking-widest">{tab.name}</span>
+              
+              {isActive && (
+                 <div className="absolute -top-1 -right-1">
+                    <Sparkles className="w-3 h-3 text-blue-500 animate-pulse" />
+                 </div>
+              )}
             </button>
           );
         })}
