@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, ExternalLink, ShieldCheck, TrendingUp, ThumbsDown, Star, Sparkles } from 'lucide-react';
 import { toggleLike, toggleDislike } from '../api';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../utils/cn';
 
 interface LinkCardProps {
   id: number;

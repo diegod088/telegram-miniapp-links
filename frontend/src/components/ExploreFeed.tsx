@@ -3,14 +3,10 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { getFeed } from '../api';
 import { LinkCard } from './LinkCard';
 import { useInView } from 'react-intersection-observer';
-import { Loader2, Sparkles, Search, X, TrendingUp, Clock, BarChart3, Filter } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { Loader2, Sparkles, Search, X, TrendingUp, Clock, Filter, BarChart } from 'lucide-react';
+import { cn } from '../utils/cn';
 import { useNavigate } from 'react-router-dom';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 const CATEGORIES = ["ALL", "Educación", "Tecnología", "Entretenimiento", "Finanzas", "Salud", "Arte", "Otros"];
 
@@ -44,7 +40,7 @@ export const ExploreFeed: React.FC = () => {
         // Hybrid pagination logic
         const params: any = { mode, category, q: debouncedQuery };
         if (mode === 'new') {
-            params.cursor = pageParam as string;
+            params.cursor = pageParam as unknown as string;
         } else {
             params.page = pageParam as number;
         }
@@ -66,7 +62,7 @@ export const ExploreFeed: React.FC = () => {
   const modeIcons = {
     trending: <TrendingUp className="w-4 h-4" />,
     new: <Clock className="w-4 h-4" />,
-    top: <BarChart3 className="w-4 h-4" />
+    top: <BarChart className="w-4 h-4" />
   };
 
   return (

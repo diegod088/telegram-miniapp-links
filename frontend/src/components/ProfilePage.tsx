@@ -1,18 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { clsx, type ClassValue } from 'clsx';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-import { getMyProfile, createProfile, addLink, deleteLink, boostLink, updateProfile } from '../api';
+import { getMyProfile, createProfile, addLink, deleteLink, boostLink } from '../api';
 import WebApp from '@twa-dev/sdk';
 import { 
     Loader2, Link as LinkIcon, Trash2, PlusCircle, UserPlus, 
-    Share, Gem, ArrowUpCircle, Heart, ThumbsDown, Eye, Settings, 
-    ExternalLink, Sparkles, ShieldCheck
+    Share, Gem, ArrowUpCircle, Heart, Eye,
+    ShieldCheck
 } from 'lucide-react';
 import PaymentModal from './PaymentModal';
 
@@ -22,12 +22,10 @@ export const ProfilePage: React.FC = () => {
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
   // Profile Form States
   const [slug, setSlug] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [bio, setBio] = useState('');
 
   // Link Form States
   const [url, setUrl] = useState('');
@@ -53,15 +51,6 @@ export const ProfilePage: React.FC = () => {
     }
   });
 
-  const updateProfileMutation = useMutation({
-    mutationFn: updateProfile,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['myProfile'] });
-      WebApp.HapticFeedback.notificationOccurred('success');
-      setShowSettings(false);
-    }
-  });
-
   const addLinkMutation = useMutation({
     mutationFn: addLink,
     onSuccess: () => {
@@ -80,13 +69,20 @@ export const ProfilePage: React.FC = () => {
     }
   });
 
+  const boostLinkMutation = useMutation({
+    mutationFn: boostLink,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+      WebApp.HapticFeedback.notificationOccurred('success');
+    }
+  });
+
   const stats = useMemo(() => {
-    if (!profile) return { links: 0, clicks: 0, likes: 0, dislikes: 0 };
+    if (!profile) return { links: 0, clicks: 0, likes: 0 };
     return {
       links: profile.links?.length || 0,
       clicks: profile.total_clicks || 0,
-      likes: profile.total_likes || 0,
-      dislikes: profile.links?.reduce((acc: number, l: any) => acc + (l.dislikes || 0), 0) || 0
+      likes: profile.total_likes || 0
     };
   }, [profile]);
 
@@ -103,11 +99,11 @@ export const ProfilePage: React.FC = () => {
           <UserPlus className="w-10 h-10 text-blue-500" />
         </div>
         <h1 className="text-4xl font-black text-white tracking-tighter mb-4">Empezar ahora</h1>
-        <p className="text-white/30 text-sm font-medium leading-relaxed mb-10">Crea tu identidad digital única para empezar a compartir y monetizar tus enlaces en Telegram.</p>
+        <p className="text-white/30 text-sm font-medium leading-relaxed mb-10">Crea tu identidad digital única para compartir enlaces.</p>
         
         <form onSubmit={(e) => {
             e.preventDefault();
-            createProfileMutation.mutate({ slug, display_name: displayName, bio });
+            createProfileMutation.mutate({ slug, display_name: displayName });
         }} className="space-y-6">
           <div className="space-y-2">
             <label className="text-[10px] font-black text-white/30 uppercase tracking-widest ml-1">Nombre Público</label>
@@ -120,7 +116,7 @@ export const ProfilePage: React.FC = () => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-white/30 uppercase tracking-widest ml-1">ID de Perfil (Slug)</label>
+            <label className="text-[10px] font-black text-white/30 uppercase tracking-widest ml-1">ID (Slug)</label>
             <div className="relative group">
                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-sm">@</span>
                <input 
@@ -147,7 +143,6 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-white px-4 pt-12 pb-40">
-      {/* Header Profile Dashboard */}
       <div className="relative bg-white/5 rounded-[40px] border border-white/5 p-8 mb-8 overflow-hidden backdrop-blur-2xl">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 blur-[60px] rounded-full translate-x-10 -translate-y-10" />
           
@@ -156,7 +151,6 @@ export const ProfilePage: React.FC = () => {
                 {profile.display_name.charAt(0).toUpperCase()}
               </div>
               <div className="flex gap-2">
-                  <button onClick={() => setShowSettings(true)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 text-white/40 hover:text-white transition-all"><Settings size={20} /></button>
                   <button onClick={() => {
                         const url = `https://t.me/TuBot/app?startapp=profile_${profile.slug}`;
                         WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(`Mira mis links en @${profile.slug}`)}`);
@@ -170,10 +164,8 @@ export const ProfilePage: React.FC = () => {
                   {profile.is_verified && <ShieldCheck className="w-5 h-5 text-blue-400" />}
               </div>
               <p className="text-blue-500 font-black text-xs uppercase tracking-widest">@{profile.slug}</p>
-              {profile.bio && <p className="text-white/40 text-sm mt-3 leading-relaxed">{profile.bio}</p>}
           </div>
 
-          {/* Atomic Stats Grid */}
           <div className="grid grid-cols-3 gap-3">
               <div className="bg-black/40 rounded-[24px] p-4 border border-white/5 text-center">
                   <p className="text-[9px] font-black text-white/20 uppercase tracking-widest mb-1">Impacto</p>
@@ -208,7 +200,6 @@ export const ProfilePage: React.FC = () => {
           currentPlan={profile.plan} 
       />
 
-      {/* Main Actions */}
       <div className="flex items-center justify-between mb-6 px-2">
           <h2 className="text-xl font-black tracking-tight">Mis Enlaces <span className="text-white/20 ml-1">{stats.links}</span></h2>
           <button 
@@ -223,52 +214,41 @@ export const ProfilePage: React.FC = () => {
           <form onSubmit={(e) => {
               e.preventDefault();
               addLinkMutation.mutate({ url, title, category, description });
-          }} className="bg-white/5 border border-blue-500/20 shadow-2xl p-6 rounded-[32px] mb-8 space-y-5 animate-in slide-in-from-top-4 fade-in duration-300">
+          }} className="bg-white/5 border border-blue-500/20 p-6 rounded-[32px] mb-8 space-y-5 animate-in slide-in-from-top-4 fade-in duration-300">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-white/20 uppercase tracking-widest ml-1">URL de Destino</label>
-              <input required value={url} onChange={e => setUrl(e.target.value)} placeholder="https://t.me/ejemplo" className="w-full bg-black/50 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" />
+              <label className="text-[10px] font-black text-white/20 uppercase tracking-widest ml-1">URL</label>
+              <input required value={url} onChange={e => setUrl(e.target.value)} placeholder="https://..." className="w-full bg-black/50 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-white/20 uppercase tracking-widest ml-1">Título Visual</label>
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Auto-detectar..." className="w-full bg-black/50 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" />
+              <label className="text-[10px] font-black text-white/20 uppercase tracking-widest ml-1">Título</label>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Título..." className="w-full bg-black/50 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-white/20 uppercase tracking-widest ml-1">Categoría</label>
-                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-black/50 border border-white/10 text-white rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-blue-500 appearance-none">
+                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-black/50 border border-white/10 text-white rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-blue-500">
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-white/20 uppercase tracking-widest ml-1">Descripción</label>
-                <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Opcional..." className="w-full bg-black/50 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" />
+                <label className="text-[10px] font-black text-white/20 uppercase tracking-widest ml-1">Descr.</label>
+                <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Breve..." className="w-full bg-black/50 border border-white/10 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500" />
               </div>
             </div>
-            <button type="submit" disabled={addLinkMutation.isPending} className="w-full bg-blue-600 text-white font-black py-4 rounded-xl text-sm shadow-xl shadow-blue-600/10 active:scale-95 transition-all">
+            <button type="submit" disabled={addLinkMutation.isPending} className="w-full bg-blue-600 text-white font-black py-4 rounded-xl text-sm active:scale-95 transition-all">
               {addLinkMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Publicar'}
             </button>
           </form>
       )}
 
-      {/* Link Inventory */}
       <div className="space-y-4">
-          {stats.links === 0 && !showAddForm && (
-            <div className="text-center py-20 bg-white/5 rounded-[40px] border border-white/5 border-dashed">
-              <LinkIcon className="w-12 h-12 text-white/10 mx-auto mb-4" />
-              <p className="text-white/20 font-black text-xs uppercase tracking-widest">El inventario está vacío</p>
-            </div>
-          )}
-          
           {profile.links?.map((link: any) => (
             <div key={link.id} className="bg-white/5 border border-white/5 p-5 rounded-[30px] flex items-center gap-4 group hover:bg-white/10 transition-all">
               <div className="w-14 h-14 bg-black/40 rounded-2xl flex items-center justify-center flex-shrink-0 text-white/20 group-hover:text-blue-500 transition-colors">
                 <LinkIcon size={24} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                   <h3 className="text-white font-black text-sm truncate uppercase tracking-tight">{link.title || 'Enlace sin título'}</h3>
-                   {link.is_sponsored && <span className="bg-yellow-500 text-black text-[8px] font-black px-1.5 py-0.5 rounded-sm">AD</span>}
-                </div>
+                <h3 className="text-white font-black text-sm truncate uppercase tracking-tight mb-1">{link.title || link.url}</h3>
                 <div className="flex items-center gap-3 text-white/20 text-[10px] font-black">
                    <span className="flex items-center gap-1"><Eye size={10} /> {link.clicks}</span>
                    <span className="flex items-center gap-1"><Heart size={10} /> {link.likes}</span>
@@ -276,12 +256,21 @@ export const ProfilePage: React.FC = () => {
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
-                    onClick={() => {
+                  onClick={() => {
                         if(confirm('¿Seguro?')) deleteLinkMutation.mutate(link.id);
-                    }}
-                    className="p-3 text-white/20 hover:text-red-500 rounded-xl hover:bg-red-500/10 transition-all active:scale-90"
+                  }}
+                  className="p-3 text-white/20 hover:text-red-500 rounded-xl hover:bg-red-500/10 transition-all active:scale-90"
                 >
                   <Trash2 size={18} />
+                </button>
+                <button 
+                  onClick={() => boostLinkMutation.mutate(link.id)}
+                  className={cn(
+                        "p-3 rounded-xl transition-all active:scale-90",
+                        link.boosted_until && new Date(link.boosted_until) > new Date() ? "text-yellow-500 bg-yellow-500/10" : "text-white/20 hover:text-blue-400"
+                  )}
+                >
+                  <ArrowUpCircle size={18} />
                 </button>
               </div>
             </div>
