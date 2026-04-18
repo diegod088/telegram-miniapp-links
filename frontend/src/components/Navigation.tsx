@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Compass, User, Sparkles } from 'lucide-react';
+import { Compass, User, Sparkles, Trophy } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -14,6 +14,7 @@ export const Navigation: React.FC = () => {
 
   const tabs = [
     { name: 'Explorar', path: '/explore', icon: Compass },
+    { name: 'Top', path: '/ranking', icon: Trophy },
     { name: 'Mi Perfil', path: '/myprofile', icon: User }
   ];
 
@@ -29,7 +30,7 @@ export const Navigation: React.FC = () => {
               key={tab.path}
               onClick={() => navigate(tab.path)}
               className={cn(
-                "group relative flex items-center gap-2 px-8 py-4 rounded-[24px] transition-all duration-300",
+                "group relative flex items-center gap-2 px-5 py-4 rounded-[24px] transition-all duration-300",
                 isActive 
                   ? "bg-white text-black shadow-xl" 
                   : "text-white/30 hover:text-white/60 hover:bg-white/5 active:scale-95"

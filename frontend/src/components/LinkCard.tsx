@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Heart, ExternalLink, ShieldCheck, TrendingUp, ThumbsDown, Star, Sparkles } from 'lucide-react';
-import { toggleLike, toggleDislike } from '../api';
+import { useNavigate } from 'react-router-dom';
+import { Heart, ExternalLink, ShieldCheck, TrendingUp, ThumbsDown, Star, Sparkles, Bookmark } from 'lucide-react';
+import { toggleLike, toggleDislike, toggleFavorite } from '../api';
 import { cn } from '../utils/cn';
 
 interface LinkCardProps {
@@ -16,6 +17,9 @@ interface LinkCardProps {
   isFeatured: boolean;
   username?: string;
   first_name?: string;
+  profileSlug?: string;
+  rank?: number;
+  thumbnail_url?: string;
   onRedirect: (id: number) => void;
 }
 
@@ -31,12 +35,17 @@ export const LinkCard: React.FC<LinkCardProps> = ({
   isFeatured,
   username,
   first_name,
+  profileSlug,
+  rank,
+  thumbnail_url,
   onRedirect,
 }) => {
+  const navigate = useNavigate();
   const [likes, setLikes] = useState(initialLikes);
   const [dislikes, setDislikes] = useState(initialDislikes);
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
   const [isAnimating, setIsAnimating] = useState<string | null>(null);
 
   const handleAction = async (e: React.MouseEvent, action: 'like' | 'dislike') => {
@@ -66,6 +75,33 @@ export const LinkCard: React.FC<LinkCardProps> = ({
     setTimeout(() => setIsAnimating(null), 500);
   };
 
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsAnimating('fav');
+    const newState = !isFavorited;
+    setIsFavorited(newState);
+    try {
+      console.log(`Sending toggleFavorite for link ${id}`);
+      const res = await toggleFavorite(id);
+      console.log(`Favorite response:`, res);
+      const twa = (window as any).Telegram?.WebApp;
+      if (twa) {
+        twa.HapticFeedback.notificationOccurred('success');
+      }
+    } catch (err: any) {
+      console.error('Favorite failed:', err);
+      setIsFavorited(!newState); // Rollback
+      const errMsg = err.response?.data?.detail || 'Error al guardar. Intenta de nuevo.';
+      const twa = (window as any).Telegram?.WebApp;
+      if (twa) {
+        twa.showAlert(errMsg);
+      } else {
+        alert(errMsg);
+      }
+    }
+    setTimeout(() => setIsAnimating(null), 500);
+  };
+
   return (
     <div 
       onClick={() => onRedirect(id)}
@@ -87,20 +123,59 @@ export const LinkCard: React.FC<LinkCardProps> = ({
             <Sparkles className="w-2 h-2 fill-current" /> Destacado
           </div>
         )}
+        {rank && rank <= 3 && (
+          <div className={cn(
+            "text-[14px] font-bold px-2 py-0.5 rounded-md shadow-lg",
+            rank === 1 ? "bg-yellow-400 text-black" : 
+            rank === 2 ? "bg-gray-300 text-black" : 
+            "bg-orange-400 text-black"
+          )}>
+            {rank === 1 ? '🥇 #1' : rank === 2 ? '🥈 #2' : '🥉 #3'}
+          </div>
+        )}
+        {rank && rank > 3 && rank <= 20 && (
+          <div className="text-white/20 text-[10px] font-black uppercase tracking-widest flex items-center">
+            #{rank}
+          </div>
+        )}
       </div>
       
       <div className="flex justify-between items-start gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none">{category}</span>
-            {isVerified && <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />}
+        <div className="flex items-center gap-4 flex-1">
+          {thumbnail_url ? (
+            <img 
+              src={thumbnail_url} 
+              alt={title} 
+              className="w-12 h-12 rounded-xl object-cover shrink-0 border border-white/10"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=random`;
+              }}
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+               <span className="text-xl font-black text-white/20">{title.charAt(0)}</span>
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none">{category}</span>
+              {isVerified && <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />}
+            </div>
+            <h3 className="text-white font-bold text-lg leading-tight line-clamp-2 group-hover:text-blue-400 transition-colors">
+              {title}
+            </h3>
+            <p 
+              onClick={(e) => {
+                e.stopPropagation();
+                if (profileSlug) {
+                  navigate(`/${profileSlug}`);
+                }
+              }}
+              className="text-white/30 text-xs mt-2 font-medium cursor-pointer hover:text-white transition-colors"
+            >
+              por <span className="text-white/50">{first_name || `@${username}` || 'Anónimo'}</span>
+            </p>
           </div>
-          <h3 className="text-white font-bold text-lg leading-tight line-clamp-2 group-hover:text-blue-400 transition-colors">
-            {title}
-          </h3>
-          <p className="text-white/30 text-xs mt-2 font-medium">
-            por <span className="text-white/50">{first_name || `@${username}` || 'Anónimo'}</span>
-          </p>
         </div>
         
         {/* Interaction Group */}
@@ -125,6 +200,16 @@ export const LinkCard: React.FC<LinkCardProps> = ({
             >
                 <ThumbsDown className={cn("w-4 h-4 transition-transform duration-300", isAnimating === 'dislike' && "scale-125", isDisliked && "fill-current")} />
                 <span className="text-[10px] font-black mt-0.5">{dislikes}</span>
+            </button>
+
+            <button 
+                onClick={handleFavorite}
+                className={cn(
+                    "flex flex-col items-center justify-center w-12 h-12 rounded-2xl transition-all shadow-lg",
+                    isFavorited ? "bg-blue-600 text-white shadow-blue-600/20" : "bg-white/5 text-white/40 hover:text-white"
+                )}
+            >
+                <Bookmark className={cn("w-5 h-5 transition-transform duration-300", isAnimating === 'fav' && "scale-125", isFavorited && "fill-current")} />
             </button>
         </div>
       </div>

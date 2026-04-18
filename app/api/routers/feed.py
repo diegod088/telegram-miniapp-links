@@ -11,7 +11,7 @@ from app.api.deps import get_db, rate_limit_public
 from app.schemas.social import FeedResponse, ExploreFeedItem
 from app.services.discovery_service import DiscoveryService
 
-router = APIRouter(prefix="/feed", tags=["feed"])
+router = APIRouter(prefix="/feed", tags=["feed"], redirect_slashes=False)
 
 
 @router.get("/trending", response_model=FeedResponse)

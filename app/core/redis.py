@@ -115,3 +115,21 @@ async def cache_delete(key: str) -> None:
         await r.delete(key)
     except Exception:
         pass
+
+
+async def cache_delete_pattern(pattern: str) -> None:
+    """
+    Delete all keys matching a glob-style pattern.
+    Example: "feed:trending:*"
+    """
+    r = get_redis()
+    if r is None:
+        return
+    try:
+        # Note: 'keys' is O(N) where N is total keys. 
+        # For small/medium datasets this is fine.
+        keys = await r.keys(pattern)
+        if keys:
+            await r.delete(*keys)
+    except Exception as e:
+        logger.warning(f"Failed to delete pattern {pattern}: {e}")

@@ -8,7 +8,14 @@ from sqlalchemy import Integer, BigInteger, Boolean, DateTime, ForeignKey, Index
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from typing import TYPE_CHECKING
+
 from app.db.session import Base
+
+if TYPE_CHECKING:
+    from .user import User
+    from .profile import Profile
+    from .lock import ContentLock
 
 
 class ProfileLink(Base):
@@ -22,6 +29,7 @@ class ProfileLink(Base):
     url: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     icon: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    thumbnail_url: Mapped[str | None] = mapped_column(Text, nullable=True)  # preview image del link
     position: Mapped[int] = mapped_column(SmallInteger, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     link_type: Mapped[str] = mapped_column(String(32), default="url")
@@ -111,3 +119,27 @@ class LinkDislike(Base):
 
     def __repr__(self) -> str:
         return f"<LinkDislike user={self.user_id} link={self.link_id}>"
+
+
+class LinkFavorite(Base):
+    """Many-to-Many association for User favorites on Links."""
+    __tablename__ = "user_link_favorites"
+
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    link_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("profile_links.id", ondelete="CASCADE"), primary_key=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+
+    # Relationships
+    user: Mapped["User"] = relationship()
+    link: Mapped["ProfileLink"] = relationship()
+
+    __table_args__ = (
+        Index("ix_user_link_favorites_user_link", "user_id", "link_id"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<LinkFavorite user={self.user_id} link={self.link_id}>"

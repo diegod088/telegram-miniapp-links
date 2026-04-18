@@ -26,6 +26,7 @@ from app.api.routers.analytics import router as analytics_router
 from app.api.routers.payments import router as payments_router
 from app.api.routers.explore import router as explore_router
 from app.api.routers.feed import router as feed_router
+from app.api.routers.social import router as social_router
 
 logger = logging.getLogger("app")
 
@@ -137,6 +138,7 @@ def create_app() -> FastAPI:
     app.include_router(payments_router, prefix="/api")
     app.include_router(explore_router, prefix="/api")
     app.include_router(feed_router, prefix="/api")
+    app.include_router(social_router, prefix="/api")
 
     # Health check
     @app.get("/health")
@@ -179,6 +181,12 @@ def create_app() -> FastAPI:
         with open(index_path, "r", encoding="utf-8") as f:
             html = f.read()
         return HTMLResponse(content=html)
+
+    # 405 Debugger: Catch POST/PUT that missed other routes
+    @app.api_route("/{full_path:path}", methods=["POST", "PUT", "DELETE"])
+    async def debug_405(request: Request, full_path: str):
+        print(f"DEBUG 405: Rejected {request.method} to {request.url.path}")
+        return Response(status_code=405, content=f"Method {request.method} not allowed on {full_path}")
 
     return app
 

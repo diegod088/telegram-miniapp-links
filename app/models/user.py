@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 from datetime import datetime, date
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Integer, BigInteger, Boolean, Index, String, Text, Date, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
+
+if TYPE_CHECKING:
+    from .profile import Profile
+    from .lock import UserUnlock
+    from .payment import Subscription
 
 
 class User(Base):

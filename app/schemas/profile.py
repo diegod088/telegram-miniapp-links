@@ -25,6 +25,10 @@ class ProfileCreate(BaseModel):
     theme: str = "default"
     is_public: bool = True
     category: Optional[str] = "Otros"
+    contact_username: Optional[str] = None
+    language: Optional[str] = None
+    telegram_group_url: Optional[str] = None
+    member_count: int = 0
 
     @field_validator("slug")
     @classmethod
@@ -56,6 +60,10 @@ class ProfileUpdate(BaseModel):
     theme: Optional[str] = None
     is_public: Optional[bool] = None
     category: Optional[str] = None
+    contact_username: Optional[str] = None
+    language: Optional[str] = None
+    telegram_group_url: Optional[str] = None
+    member_count: Optional[int] = None
 
     @field_validator("display_name")
     @classmethod
@@ -78,6 +86,10 @@ class LinkInProfile(BaseModel):
     is_active: bool
     link_type: str
     style: dict = {}
+    thumbnail_url: Optional[str] = None
+    likes: int = 0
+    dislikes: int = 0
+    clicks: int = 0
     is_locked: bool = False
     lock_id: Optional[int] = None
     lock_type: Optional[str] = None
@@ -97,6 +109,7 @@ class ProfileResponse(BaseModel):
     plan: str
     total_views: int
     category: Optional[str] = None
+    contact_username: Optional[str] = None
     created_at: datetime
     links: list[LinkInProfile] = []
 
@@ -112,6 +125,7 @@ class ProfilePublicResponse(BaseModel):
     theme: str
     total_views: int
     category: Optional[str] = None
+    contact_username: Optional[str] = None
     links: list[LinkInProfile] = []
 
     model_config = {"from_attributes": True}
@@ -126,7 +140,11 @@ class ExploreProfileItem(BaseModel):
     plan: str
     link_count: int
     total_views: int
+    total_likes: int = 0
     category: Optional[str] = None
+    language: Optional[str] = None
+    telegram_group_url: Optional[str] = None
+    member_count: int = 0
 
     model_config = {"from_attributes": True}
 

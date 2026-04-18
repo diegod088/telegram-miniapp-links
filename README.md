@@ -46,6 +46,9 @@ pip install -r requirements.txt
 
 ### 3. Configure Environment
 
+> [!IMPORTANT]
+> **Security Notice**: The previous `BOT_TOKEN` in `.env.example` was revoked due to exposure in the history. You MUST generate a new token via [@BotFather](https://t.me/BotFather) for your local `.env`.
+
 ```bash
 cp .env.example .env
 # Edit .env with your values (BOT_TOKEN, WEBAPP_URL, etc.)

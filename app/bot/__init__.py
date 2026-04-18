@@ -56,8 +56,10 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         deeplink_param = context.args[0]
 
     if deeplink_param:
+        logger.info(f"Bot: /start with param '{deeplink_param}' from user {update.effective_user.id}")
         full_url = f"{webapp_url}?startapp={deeplink_param}"
     else:
+        logger.info(f"Bot: /start from user {update.effective_user.id}")
         full_url = webapp_url
 
     keyboard = InlineKeyboardMarkup([
@@ -93,6 +95,7 @@ async def cmd_myprofile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     /myprofile — Direct link to the user's own profile in the Mini App.
     """
     webapp_url = context.bot_data.get("webapp_url", "https://example.com")
+    logger.info(f"Bot: /myprofile from user {update.effective_user.id}")
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(

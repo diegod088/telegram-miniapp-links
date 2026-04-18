@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional, List
 
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.settings import get_settings
@@ -12,6 +13,7 @@ from app.core.exceptions import ForbiddenError, NotFoundError, PlanLimitError
 from app.models.profile import Profile
 from app.models.user import User
 from app.schemas.profile import ProfileCreate, ProfileUpdate
+from app.services.activity_service import ActivityService
 from app.repositories.profile_repository import ProfileRepository
 from app.repositories.user_repository import UserRepository
 from app.core.security import sanitize_text, validate_slug, is_slug_reserved
@@ -55,34 +57,35 @@ class ProfileService:
         # Check slug uniqueness
         existing_by_slug = await self.profile_repo.get_by_slug(data.slug)
         if existing_by_slug:
-            # Self-healing logic if Telegram ID matches
-            # This logic might be moved to a higher-level orchestration if needed
-            # For now, keeping it here but using repo
-            if existing_by_slug.user_id != user.id:
-                # We need to check if the other user has the same telegram_id
-                # This requires fetching the other user
-                other_user = await self.user_repo.get(existing_by_slug.user_id)
-                if other_user and other_user.telegram_id == user.telegram_id:
-                    existing_by_slug.user_id = user.id
-                    await self.db.flush()
-                    return await self.profile_repo.get_by_user_id(user.id, include_links=True)
-                
-                raise ForbiddenError(f"The slug '{data.slug}' is already taken.")
+            raise ForbiddenError(f"The slug '{data.slug}' is already taken.")
 
-        plan = data.plan if hasattr(data, 'plan') else "free"
-        profile_data = data.model_dump()
+        # 1. Create the profile
+        await self.profile_repo.create(
+            user_id=user.id,
+            slug=data.slug.lower(),
+            display_name=sanitize_text(data.display_name),
+            bio=sanitize_text(data.bio or ""),
+            is_public=True,
+            plan="free",
+            boost_score=1.0,
+            contact_username=sanitize_text(data.contact_username or "")
+        )
         
-        # 3. Sanitize inputs
-        profile_data["display_name"] = sanitize_text(profile_data.get("display_name"))
-        profile_data["bio"] = sanitize_text(profile_data.get("bio"))
-
-        if 'plan' not in profile_data:
-            profile_data['plan'] = plan
-            
-        profile_data['user_id'] = user.id
-        profile_data['boost_score'] = self.get_boost_score(plan)
+        # 2. Return with links loaded (even if empty) to avoid MissingGreenlet
+        profile = await self.profile_repo.get_by_user_id(user.id, include_links=True)
         
-        return await self.profile_repo.create(**profile_data)
+        # 3. Record Activity
+        activity_service = ActivityService(self.db)
+        await activity_service.record_activity(
+            type="profile_creation",
+            message=f"{profile.display_name} se ha unido a la comunidad!",
+            user_id=user.id,
+            target_id=profile.slug,
+            target_type="profile"
+        )
+        
+        await self.db.commit()
+        return profile
 
     async def get_my_profile(self, user: User) -> Profile:
         """Get the profile owned by the given user."""
@@ -114,6 +117,8 @@ class ProfileService:
             update_data["display_name"] = sanitize_text(update_data["display_name"])
         if "bio" in update_data:
             update_data["bio"] = sanitize_text(update_data["bio"])
+        if "contact_username" in update_data:
+            update_data["contact_username"] = sanitize_text(update_data["contact_username"] or "")
 
         updated_profile = await self.profile_repo.update(profile.id, **update_data)
         
@@ -122,7 +127,8 @@ class ProfileService:
         discovery = DiscoveryService(self.db)
         await discovery.update_search_vector(profile.id)
 
-        return updated_profile
+        # 3. Return with links loaded
+        return await self.profile_repo.get_by_user_id(user.id, include_links=True)
 
     async def check_daily_limit(self, user: User) -> None:
         """Check daily link creation limit for free users."""

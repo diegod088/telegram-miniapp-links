@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from sqlalchemy import Integer, BigInteger, Boolean, CheckConstraint, ForeignKey, Index, String, UniqueConstraint, DateTime, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
+
+if TYPE_CHECKING:
+    from .link import ProfileLink
+    from .profile import Profile
+    from .user import User
 
 
 class ContentLock(Base):

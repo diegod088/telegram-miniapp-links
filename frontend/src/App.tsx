@@ -4,8 +4,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import WebApp from '@twa-dev/sdk';
 import { ExploreFeed } from './components/ExploreFeed';
 import { RedirectPage } from './components/RedirectPage';
+import { RankingPage } from './components/RankingPage';
 import { ProfilePage } from './components/ProfilePage';
+import { PublicProfilePage } from './components/PublicProfilePage';
 import { Navigation } from './components/Navigation';
+import { BackButtonHandler } from './components/BackButtonHandler';
 
 const queryClient = new QueryClient();
 
@@ -55,19 +58,24 @@ function App() {
     <QueryClientProvider client={queryClient}>
       {!isAdult && <AgeVerification onAccept={handleAccept} />}
       <Router>
-        <div className="max-w-xl mx-auto min-h-screen shadow-2xl shadow-black/50 relative">
-          <Routes>
-            <Route path="/explore" element={<ExploreFeed />} />
-            <Route path="/myprofile" element={<ProfilePage />} />
-            <Route path="/r/:id" element={<RedirectPage />} />
-            <Route path="*" element={<Navigate to="/explore" replace />} />
-          </Routes>
-          
-          <Routes>
-            <Route path="/explore" element={<Navigation />} />
-            <Route path="/myprofile" element={<Navigation />} />
-          </Routes>
-        </div>
+        <BackButtonHandler>
+          <div className="max-w-xl mx-auto min-h-screen shadow-2xl shadow-black/50 relative">
+            <Routes>
+              <Route path="/explore" element={<ExploreFeed />} />
+              <Route path="/ranking" element={<RankingPage />} />
+              <Route path="/myprofile" element={<ProfilePage />} />
+              <Route path="/p/:slug" element={<PublicProfilePage />} />
+              <Route path="/r/:id" element={<RedirectPage />} />
+              <Route path="*" element={<Navigate to="/explore" replace />} />
+            </Routes>
+            
+            <Routes>
+              <Route path="/explore" element={<Navigation />} />
+              <Route path="/ranking" element={<Navigation />} />
+              <Route path="/myprofile" element={<Navigation />} />
+            </Routes>
+          </div>
+        </BackButtonHandler>
       </Router>
     </QueryClientProvider>
   );

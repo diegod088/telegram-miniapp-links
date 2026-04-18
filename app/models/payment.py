@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Integer, BigInteger, Integer, ForeignKey, Numeric, String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
+
+if TYPE_CHECKING:
+    from .user import User
 
 
 class Subscription(Base):

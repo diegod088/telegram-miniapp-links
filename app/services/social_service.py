@@ -11,6 +11,8 @@ import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.link_repository import LinkRepository
+from app.services.activity_service import ActivityService
+from app.models.user import User
 
 logger = logging.getLogger("app")
 
@@ -39,31 +41,38 @@ class SocialService:
             logger.warning(f"Error scrubbing URL {url}: {e}")
             return url
 
-    async def scrape_page_title(self, url: str) -> Optional[str]:
-        """Attempt to fetch og:title or <title> from a URL."""
+    async def scrape_page_title(self, url: str) -> Tuple[Optional[str], Optional[str]]:
+        """Attempt to fetch og:title/title and og:image from a URL."""
         try:
             async with httpx.AsyncClient(timeout=3.0, follow_redirects=True) as client:
                 response = await client.get(url, headers={"User-Agent": "TGLinktree-Bot/1.0"})
                 if response.status_code != 200:
-                    return None
+                    return None, None
                 
                 html = response.text
                 
-                # 1. Try og:title
-                og_match = re.search(r'<meta[^>]*property=["\']og:title["\'][^>]*content=["\']([^"\']+)["\']', html, re.IGNORECASE)
-                if og_match:
-                    return og_match.group(1)
+                # 1. Try og:title and og:image
+                title = None
+                image = None
                 
-                # 2. Try <title>
-                title_match = re.search(r'<title[^>]*>(.*?)</title>', html, re.IGNORECASE | re.DOTALL)
-                if title_match:
-                    title = title_match.group(1).strip()
-                    return re.sub(r'<[^>]+>', '', title)
+                og_title_match = re.search(r'<meta[^>]*property=["\']og:title["\'][^>]*content=["\']([^"\']+)["\']', html, re.IGNORECASE)
+                if og_title_match:
+                    title = og_title_match.group(1)
+                
+                og_image_match = re.search(r'<meta[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']', html, re.IGNORECASE)
+                if og_image_match:
+                    image = og_image_match.group(1)
+                
+                # 2. Try <title> if og:title failed
+                if not title:
+                    title_match = re.search(r'<title[^>]*>(.*?)</title>', html, re.IGNORECASE | re.DOTALL)
+                    if title_match:
+                        title = re.sub(r'<[^>]+>', '', title_match.group(1).strip())
                     
-                return None
+                return title, image
         except Exception as e:
             logger.debug(f"Scraping failed for {url}: {e}")
-            return None
+            return None, None
 
     async def toggle_like(self, user_id: int, link_id: int) -> Tuple[int, bool]:
         """
@@ -88,12 +97,25 @@ class SocialService:
             await self.db.execute(stmt)
             link.likes = max(0, link.likes - 1)
             is_now_liked = False
-        else:
             # Add like
             await self.link_repo.add_like(user_id, link_id)
+            link.likes += 1
             is_now_liked = True
             
-        await self.db.flush()
+        if is_now_liked:
+            # 3. Record Activity (Pulse)
+            activity_svc = ActivityService(self.db)
+            # Re-fetch user name if possible, or use generic
+            user = await self.db.get(User, user_id)
+            await activity_svc.record_activity(
+                type="link_trending",
+                message=f"{(user.first_name if user else 'Alguien')} le dio like a un enlace popular!",
+                user_id=user_id,
+                target_id=str(link_id),
+                target_type="link"
+            )
+
+        await self.db.commit()
         return link.likes, is_now_liked
 
     async def toggle_dislike(self, user_id: int, link_id: int) -> Tuple[int, bool]:

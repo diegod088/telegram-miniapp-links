@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db, rate_limit_auth, rate_limit_public, check_rate_limit
 from app.api.auth import get_current_user_optional
 from app.core.exceptions import NotFoundError, RateLimitError
+from app.core.redis import cache_delete_pattern
 from app.models.user import User
 from app.schemas.social import ExploreFeedResponse, ExploreFeedItem, SocialActionResponse
 from app.services.discovery_service import DiscoveryService
@@ -18,13 +19,14 @@ from app.services.social_service import SocialService
 from app.services.redirect_service import RedirectService
 from app.services.analytics_service import AnalyticsService
 
-router = APIRouter(prefix="/explore", tags=["explore"])
+router = APIRouter(prefix="/explore", tags=["explore"], redirect_slashes=False)
 
 
 @router.get("/feed", response_model=ExploreFeedResponse)
 async def get_explore_feed(
     category: Optional[str] = Query(None),
     q: Optional[str] = Query(None),
+    language: Optional[str] = Query(None, max_length=8),
     cursor: Optional[datetime] = Query(None),
     limit: int = Query(default=20, le=50, ge=1),
     db: AsyncSession = Depends(get_db),
@@ -39,6 +41,7 @@ async def get_explore_feed(
         category=category,
         query_str=q,
         cursor=cursor,
+        language=language,
         limit=limit
     )
 
@@ -69,6 +72,10 @@ async def like_link(
         new_count, is_liked = await service.toggle_like(user.id, link_id)
         # Fetch current dislikes for response
         link = await service.link_repo.get(link_id)
+        # 4. Invalidate social feeds cache
+        await cache_delete_pattern("feed:trending:*")
+        await cache_delete_pattern("feed:top:*")
+        
         return SocialActionResponse(
             likes=new_count, 
             dislikes=link.dislikes,
@@ -97,6 +104,10 @@ async def dislike_link(
         new_count, is_disliked = await service.toggle_dislike(user.id, link_id)
         # Fetch current likes for response
         link = await service.link_repo.get(link_id)
+        # 4. Invalidate social feeds cache
+        await cache_delete_pattern("feed:trending:*")
+        await cache_delete_pattern("feed:top:*")
+        
         return SocialActionResponse(
             likes=link.likes,
             dislikes=new_count,
@@ -147,3 +158,33 @@ async def redirect_link(
         "title": info["title"],
         "is_monetized": info["is_monetized"],
     }
+
+
+@router.post("/links/{link_id}/report", status_code=202)
+async def report_link(
+    link_id: int = Path(...),
+    user: User = Depends(rate_limit_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Report a link as spam/inappropriate. Rate limit: 5/hour."""
+    allowed = await check_rate_limit(f"report:{user.id}", 5, 3600)
+    if not allowed:
+        raise RateLimitError("Máximo 5 reportes por hora.")
+    
+    from app.repositories.link_repository import LinkRepository
+    repo = LinkRepository(db)
+    link = await repo.get(link_id)
+    if not link:
+        raise NotFoundError("Link not found")
+    
+    link.report_count += 1
+    # Auto-hide if report_count exceeds threshold
+    if link.report_count >= 10:
+        link.is_active = False
+    
+    await db.flush()
+    # Invalidate caches as the item might have been hidden
+    await cache_delete_pattern("feed:trending:*")
+    await cache_delete_pattern("feed:top:*")
+    
+    return {"status": "reported", "link_id": link_id}

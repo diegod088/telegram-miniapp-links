@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ForbiddenError
+from app.core.exceptions import ForbiddenError, NotFoundError
 from app.models.user import User
 from app.repositories.analytics_repository import AnalyticsRepository
 from app.repositories.profile_repository import ProfileRepository

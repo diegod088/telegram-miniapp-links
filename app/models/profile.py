@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Any
+from typing import Optional, Any, TYPE_CHECKING
 from datetime import datetime
 
 from sqlalchemy import Integer, BigInteger, \
@@ -10,6 +10,12 @@ from sqlalchemy import Integer, BigInteger, \
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
+
+if TYPE_CHECKING:
+    from .user import User
+    from .link import ProfileLink
+    from .lock import ContentLock
+    from .analytics import ClickEvent
 
 
 class Profile(Base):
@@ -28,6 +34,12 @@ class Profile(Base):
     plan: Mapped[str] = mapped_column(String(16), default="free")
     total_views: Mapped[int] = mapped_column(BigInteger, default=0)
     category: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    contact_username: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    
+    # Discovery fields (combot-style)
+    language: Mapped[str | None] = mapped_column(String(8), nullable=True, index=True)  # "es", "en", "pt"
+    telegram_group_url: Mapped[str | None] = mapped_column(Text, nullable=True)  # t.me/grupoejemplo
+    member_count: Mapped[int] = mapped_column(Integer, default=0)  # miembros del grupo TG
     
     # Monetization
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getRedirectInfo } from '../api';
-import { Loader2, ArrowRight, ShieldCheck, Zap, Tv, Crown } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, ShieldCheck, Zap, Tv, Crown, Undo2 } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -17,6 +17,7 @@ export const RedirectPage: React.FC = () => {
   const [data, setData] = useState<{ affiliate_url: string; title: string; is_monetized?: boolean } | null>(null);
   const [countdown, setCountdown] = useState(3);
   const [showAdNotice, setShowAdNotice] = useState(false);
+  const [redirected, setRedirected] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export const RedirectPage: React.FC = () => {
       }
     };
     fetchData();
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => {
     // Solo iniciar countdown si NO se muestra el aviso de anuncios
@@ -67,6 +68,7 @@ export const RedirectPage: React.FC = () => {
       // Para VIP o enlaces no monetizados, comportamiento estándar
       WebApp.openLink(url);
     }
+    setRedirected(true);
   };
 
   const handleAcceptAds = () => {
@@ -84,6 +86,24 @@ export const RedirectPage: React.FC = () => {
       }
     }
   };
+
+  if (redirected) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0b] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6">
+          <ShieldCheck className="w-10 h-10 text-green-500" />
+        </div>
+        <h2 className="text-2xl font-black text-white mb-2">¡Enlace abierto!</h2>
+        <p className="text-white/40 mb-10 text-sm">Ya puedes ver el contenido en tu navegador o Telegram.</p>
+        <button 
+          onClick={() => navigate(-1)}
+          className="w-full max-w-xs py-4 bg-white text-black font-black rounded-2xl active:scale-95 transition-all shadow-xl shadow-white/5"
+        >
+          Volver a la App
+        </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -114,7 +134,16 @@ export const RedirectPage: React.FC = () => {
   // Modal de aviso de anuncios para usuarios free
   if (showAdNotice) {
     return (
-      <div className="min-h-screen bg-[#0a0a0b] flex flex-col items-center justify-center p-6 overflow-hidden">
+      <div className="min-h-screen bg-[#0a0a0b] flex flex-col items-center justify-center p-6 overflow-hidden relative">
+        {/* Visible Back Button */}
+        <button 
+          onClick={() => navigate(-1)}
+          className="absolute top-8 left-6 p-4 rounded-2xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-90 z-20"
+          aria-label="Volver"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
         <div className="w-full max-w-sm">
           {/* Glassmorphism Card */}
           <div className="relative bg-white/[0.06] backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
@@ -157,6 +186,14 @@ export const RedirectPage: React.FC = () => {
               <ArrowRight className="w-5 h-5" />
             </button>
 
+            <button
+              onClick={() => navigate(-1)}
+              className="w-full mt-4 py-2 text-sm font-medium text-white/30 hover:text-white/50 transition-colors active:scale-95 flex items-center justify-center gap-2"
+            >
+              <Undo2 className="w-4 h-4" />
+              Cancelar y volver
+            </button>
+
             {/* Browser tip */}
             <p className="mt-4 text-[10px] text-white/30 text-center px-4 leading-tight">
               Tip: Si el enlace no carga, asegúrate de activar el <span className="text-white/50">"Navegador Externo"</span> en los ajustes de Telegram o pulsa los 3 puntos y selecciona "Abrir en navegador".
@@ -186,7 +223,14 @@ export const RedirectPage: React.FC = () => {
 
   // Pantalla normal de redirección (para VIP o después de aceptar anuncios)
   return (
-    <div className="min-h-screen bg-[#0a0a0b] flex flex-col items-center justify-between p-6 overflow-hidden">
+    <div className="min-h-screen bg-[#0a0a0b] flex flex-col items-center justify-between p-6 overflow-hidden relative">
+      <button 
+        onClick={() => navigate(-1)}
+        className="absolute top-8 left-6 p-4 rounded-2xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-90 z-20"
+      >
+        <ArrowLeft className="w-5 h-5" />
+      </button>
+
       <div className="w-full max-w-sm flex flex-col items-center mt-20">
         <div className="w-20 h-20 rounded-3xl bg-blue-500/20 flex items-center justify-center mb-8 relative">
           <div className="absolute inset-0 bg-blue-500 blur-2xl opacity-20 animate-pulse" />

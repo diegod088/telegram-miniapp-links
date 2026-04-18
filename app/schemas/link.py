@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional
 
 from pydantic import BaseModel, field_validator
+from app.core.constants import LINK_CATEGORIES
 
 
 class LinkCreate(BaseModel):
@@ -13,9 +14,9 @@ class LinkCreate(BaseModel):
     title: Optional[str] = None
     category: str = "OTHER"
     description: Optional[str] = None
-    icon: Optional[str] = None
     link_type: str = "url"
     style: dict = {}
+    thumbnail_url: Optional[str] = None
 
     @field_validator("title")
     @classmethod
@@ -45,11 +46,11 @@ class LinkCreate(BaseModel):
     @field_validator("category")
     @classmethod
     def validate_category(cls, v: str) -> str:
-        allowed = {"MOVIES", "SERIES", "ADULT", "VIP", "OTHER"}
-        v = v.upper()
-        if v not in allowed:
-            return "OTHER"
-        return v
+        # Normalize to title case to match LINK_CATEGORIES
+        v_title = v.strip().title()
+        if v_title not in LINK_CATEGORIES:
+            return "Otros"
+        return v_title
 
 
 class LinkUpdate(BaseModel):
@@ -63,6 +64,7 @@ class LinkUpdate(BaseModel):
     category: Optional[str] = None
     link_type: Optional[str] = None
     style: Optional[dict] = None
+    thumbnail_url: Optional[str] = None
 
     @field_validator("link_type")
     @classmethod
@@ -92,6 +94,7 @@ class LinkResponse(BaseModel):
     clicks: int
     link_type: str
     style: dict = {}
+    thumbnail_url: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { getFeed } from '../api';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { getFeed, getLanguages } from '../api';
 import { LinkCard } from './LinkCard';
 import { useInView } from 'react-intersection-observer';
 import { Loader2, Sparkles, Search, X, TrendingUp, Clock, Filter, BarChart } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useNavigate } from 'react-router-dom';
+import { FeaturedCarousel } from './FeaturedCarousel';
+import { PulseView } from './PulseView';
+import { Zap } from 'lucide-react';
 
 
 const CATEGORIES = ["ALL", "Educación", "Tecnología", "Entretenimiento", "Finanzas", "Salud", "Arte", "Otros"];
@@ -17,6 +20,8 @@ export const ExploreFeed: React.FC = () => {
   const [category, setCategory] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [language, setLanguage] = useState("");
+  const [showPulse, setShowPulse] = useState(false);
   const { ref, inView } = useInView();
   const navigate = useNavigate();
 
@@ -35,22 +40,27 @@ export const ExploreFeed: React.FC = () => {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ['feed', mode, category, debouncedQuery],
+    queryKey: ['feed', mode, category, debouncedQuery, language],
     queryFn: ({ pageParam }) => {
         // Hybrid pagination logic
-        const params: any = { mode, category, q: debouncedQuery };
+        const params: any = { mode, category, q: debouncedQuery, language };
         if (mode === 'new') {
             params.cursor = pageParam as unknown as string;
         } else {
             params.page = pageParam as number;
         }
-        return getFeed(mode, category, params.cursor, params.page, debouncedQuery);
+        return getFeed(mode, category, params.cursor, params.page, debouncedQuery, language);
     },
     getNextPageParam: (lastPage) => {
         if (mode === 'new') return lastPage.next_cursor;
         return lastPage.next_page;
     },
     initialPageParam: mode === 'new' ? undefined : 1,
+  });
+
+  const { data: languages } = useQuery({
+    queryKey: ['languages'],
+    queryFn: getLanguages,
   });
 
   useEffect(() => {
@@ -76,10 +86,19 @@ export const ExploreFeed: React.FC = () => {
             </h1>
             <p className="text-white/30 text-xs font-bold uppercase tracking-widest mt-1">Global Discovery Hub</p>
           </div>
-          <div className="relative">
-             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 animate-pulse opacity-20 blur-xl absolute inset-0" />
-             <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md relative">
-                <Filter className="w-5 h-5 text-white/40" />
+          <div className="flex gap-2">
+             <button 
+                onClick={() => setShowPulse(true)}
+                className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md relative active:scale-95 group transition-all"
+             >
+                <Zap className="w-5 h-5 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#0a0a0b]" />
+             </button>
+             <div className="relative">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 animate-pulse opacity-20 blur-xl absolute inset-0" />
+                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md relative">
+                    <Filter className="w-5 h-5 text-white/40" />
+                </div>
              </div>
           </div>
         </div>
@@ -142,7 +161,47 @@ export const ExploreFeed: React.FC = () => {
             </button>
           ))}
         </div>
+
+        {/* Language Filter Pills */}
+        {languages && languages.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide no-scrollbar border-t border-white/5 pt-4">
+            <button
+              onClick={() => setLanguage("")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-[9px] font-black transition-all border uppercase tracking-widest",
+                language === "" 
+                  ? "bg-white text-black border-white" 
+                  : "bg-white/5 text-white/30 border-white/5"
+              )}
+            >
+              All Languages
+            </button>
+            {languages.map((lang: any) => (
+              <button
+                key={lang.language}
+                onClick={() => setLanguage(lang.language)}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[9px] font-black transition-all border uppercase tracking-widest flex items-center gap-1.5",
+                  language === lang.language 
+                    ? "bg-white text-black border-white" 
+                    : "bg-white/5 text-white/30 border-white/5"
+                )}
+              >
+                {lang.language}
+                <span className="opacity-40">{lang.count}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </header>
+
+      {/* Featured VIP Showcase */}
+      {(mode === 'trending' && !category || category === 'ALL') && !searchQuery && (
+        <FeaturedCarousel />
+      )}
+
+      {/* Pulse Modal */}
+      <PulseView isOpen={showPulse} onClose={() => setShowPulse(false)} />
 
       {/* Dynamic Feed Grid */}
       {status === 'pending' ? (
@@ -182,6 +241,9 @@ export const ExploreFeed: React.FC = () => {
                   isFeatured={link.is_featured}
                   username={link.username}
                   first_name={link.first_name}
+                  profileSlug={link.profile_slug}
+                  rank={link.rank}
+                  thumbnail_url={link.thumbnail_url}
                   onRedirect={(id) => navigate(`/r/${id}`)}
                 />
               ))}
@@ -190,9 +252,30 @@ export const ExploreFeed: React.FC = () => {
           
           {/* Empty state */}
           {data?.pages[0].items.length === 0 && (
-            <div className="text-center py-20 opacity-20">
-                <Search className="w-12 h-12 mx-auto mb-4" />
-                <p className="font-bold">No results found in {mode}</p>
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-12 text-center backdrop-blur-md">
+                <Search className="w-12 h-12 mx-auto mb-4 text-white/10" />
+                {debouncedQuery ? (
+                  <>
+                    <h3 className="text-lg font-bold">No results</h3>
+                    <p className="text-white/40 text-xs mt-1">No encontramos coincidencias para "{debouncedQuery}" en {mode}</p>
+                  </>
+                ) : (category !== "ALL" || language) ? (
+                  <>
+                    <h3 className="text-lg font-bold">Sin contenido</h3>
+                    <p className="text-white/40 text-xs mt-1">No hay enlaces en {category} {language && `(${language})`} todavía. ¡Sé el primero!</p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-bold">Feed vacío</h3>
+                    <p className="text-white/40 text-xs mt-1">El feed está vacío en este momento. ¡Comparte tus enlaces!</p>
+                  </>
+                )}
+                <button 
+                  onClick={() => navigate('/profile')}
+                  className="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20"
+                >
+                  Ir a mi perfil
+                </button>
             </div>
           )}
         </div>

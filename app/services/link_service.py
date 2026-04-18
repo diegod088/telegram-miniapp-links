@@ -71,11 +71,15 @@ class LinkService:
         # 3. Scrub URL
         canonical_url = await self.social_service.scrub_url(data.url)
         
-        # 4. Scrape title if missing
+        # 4. Scrape title/thumbnail if missing
         title = data.title
-        if not title:
-            scraped_title = await self.social_service.scrape_page_title(canonical_url)
-            title = scraped_title or canonical_url
+        scraped_thumb = data.thumbnail_url
+        if not title or not scraped_thumb:
+            scraped_title, scraped_img = await self.social_service.scrape_page_title(canonical_url)
+            if not title:
+                title = scraped_title or canonical_url
+            if not scraped_thumb:
+                scraped_thumb = scraped_img
 
         # 5. Sanitize
         title = sanitize_text(title)
@@ -92,6 +96,7 @@ class LinkService:
             "description": link_description,
             "canonical_url": canonical_url,
             "position": next_position,
+            "thumbnail_url": scraped_thumb,
         })
         
         link = await self.link_repo.create(**link_data)

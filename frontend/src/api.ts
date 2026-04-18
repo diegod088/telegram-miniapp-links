@@ -24,6 +24,7 @@ export const getFeed = async (
   cursor?: string,
   page?: number,
   q?: string,
+  language?: string,
   limit: number = 20
 ) => {
   const params: any = { limit };
@@ -31,6 +32,7 @@ export const getFeed = async (
   if (cursor) params.cursor = cursor;
   if (page) params.page = page;
   if (q) params.q = q;
+  if (language) params.language = language;
   
   const response = await api.get(`/feed/${mode}`, { params });
   return response.data;
@@ -66,12 +68,17 @@ export const getMyProfile = async () => {
   return response.data;
 };
 
+export const getPublicProfile = async (slug: string) => {
+  const response = await api.get(`/profiles/${slug}`);
+  return response.data;
+};
+
 export const createProfile = async (data: { slug: string; display_name: string; bio?: string }) => {
   const response = await api.post('/profiles', data);
   return response.data;
 };
 
-export const updateProfile = async (data: { display_name?: string; bio?: string; theme?: any }) => {
+export const updateProfile = async (data: { display_name?: string; bio?: string; theme?: any; contact_username?: string }) => {
   const response = await api.patch('/profiles/me', data);
   return response.data;
 };
@@ -106,6 +113,45 @@ export const createInvoice = async (planId: string) => {
 export const fetchMyPlan = async () => {
   const response = await api.get('/profiles/me/plan');
   return response.data;
+};
+
+// --- Ranking ---
+
+export const getProfileRanking = async (
+  sortBy: 'likes' | 'views' = 'likes',
+  category?: string,
+  limit: number = 20,
+  offset: number = 0
+) => {
+  const params: any = { sort_by: sortBy, limit, offset };
+  if (category && category !== 'ALL') params.category = category;
+  const response = await api.get('/discovery/ranking', { params });
+  return response.data;
+};
+
+export const toggleFavorite = async (linkId: number) => {
+  const response = await api.post(`/social/links/${linkId}/favorite`);
+  return response.data;
+};
+
+export const getFavorites = async () => {
+  const response = await api.get('/social/favorites');
+  return response.data;
+};
+
+export const getPulse = async () => {
+  const response = await api.get('/discovery/pulse');
+  return response.data;
+};
+
+export const getFeaturedProfiles = async () => {
+  const response = await api.get('/discovery/featured');
+  return response.data;
+};
+
+export const getLanguages = async () => {
+    const response = await api.get('/discovery/languages');
+    return response.data;
 };
 
 export default api;
